@@ -78,7 +78,7 @@ class Policy(nn.Module):
         return index_ext
 
     def evaluate_actions(self, inputs, rnn_hxs, masks, action,indices,rewards):
-        indices_extended = self.get_index(indices)
+        indices_ext = self.get_index(indices)
         l = range(len(indices_ext))[self.N_backprop - 1::self.N_backprop] ## List of index for the original list
 
         value, actor_features, rnn_hxs,beta_v = self.base(inputs[indices_ext], rnn_hxs[indices_ext], masks[indices_ext])
