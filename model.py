@@ -86,6 +86,7 @@ class Policy(nn.Module):
 
         indices_ext = self.get_index(indices)
         indices_ext_flat = [item for sublist in indices_ext for item in sublist]
+        print(indices_ext_flat)
         value, _, rnn_hxs,beta_v = self.base(inputs[indices_ext_flat], rnn_hxs[indices_ext_flat], masks[indices_ext_flat])
 
         value_mixed = []
