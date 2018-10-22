@@ -51,12 +51,14 @@ class PPO():
             for sample in data_generator:
                 obs_batch, recurrent_hidden_states_batch, actions_batch, \
                    value_preds_batch, return_batch, masks_batch, old_action_log_probs_batch, \
-                        adv_targ = sample
+                        adv_targ,indices = sample
 
                 # Reshape to do in a single forward pass for all steps
                 values, action_log_probs, dist_entropy, _ = self.actor_critic.evaluate_actions(
-                    obs_batch, recurrent_hidden_states_batch,
-                    masks_batch, actions_batch)
+                    rollouts.obs[:-1].view(-1, *rollouts.obs.size()[2:]), rollouts.recurrent_hidden_states[:-1].view(-1,
+                    rollouts.recurrent_hidden_states.size(-1)),
+                    rollouts.masks[:-1].view(-1, 1), rollouts.actions.view(-1, rollouts.actions.size(-1)),
+                    indices,rollouts.rewards.view(-1,1))
 
                 ratio = torch.exp(action_log_probs - old_action_log_probs_batch)
                 surr1 = ratio * adv_targ

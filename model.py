@@ -46,7 +46,7 @@ class Policy(nn.Module):
         raise NotImplementedError
 
     def act(self, inputs, rnn_hxs, masks, deterministic=False):
-        value, actor_features, rnn_hxs = self.base(inputs, rnn_hxs, masks)
+        value, actor_features, rnn_hxs,_ = self.base(inputs, rnn_hxs, masks)
         dist = self.dist(actor_features)
 
         if deterministic:
@@ -60,12 +60,43 @@ class Policy(nn.Module):
         return value, action, action_log_probs, rnn_hxs
 
     def get_value(self, inputs, rnn_hxs, masks):
-        value, _, _ = self.base(inputs, rnn_hxs, masks)
+        value, _, _, _ = self.base(inputs, rnn_hxs, masks)
         return value
 
-    def evaluate_actions(self, inputs, rnn_hxs, masks, action):
-        value, actor_features, rnn_hxs = self.base(inputs, rnn_hxs, masks)
+    def get_index(self,indices):
+        del_index = [i*self.num_steps for i in list(range(self.num_processes))] ## First you identify the index of the end of the storage of the processes
+        index_ext = []
+        for b in indices:
+            lim = del_index[int(b/(self.num_steps))]
+            for i in reversed(range(self.N_backprop)):
+                if b-i < lim: # if the index used goes on another process memory than block it
+                    index_ext.append(lim)
+                else:
+                    index_ext.append(b-i)
+        return index_ext
+
+    def evaluate_actions(self, inputs, rnn_hxs, masks, action,indices,rewards):
+        indices_ext = self.get_index(indices)
+        l = range(len(indices_ext))[self.N_backprop - 1::self.N_backprop] ## List of index for the original list
+
+        value, actor_features, rnn_hxs,beta_v = self.base(inputs[indices_ext], rnn_hxs[indices_ext], masks[indices_ext])
         dist = self.dist(actor_features)
+
+
+        value_mixed = []
+        for i in range(len(indices)):
+            idx_ext = i*self.N_backprop
+            idx = indices_ext[idx_ext]
+            prev_value = prev_value_list[idx]
+            for n in range(self.N_backprop):
+                idx = indices_ext[idx_ext + n]
+                prev_value = masks[idx] * prev_value + (1 - masks[idx]) * value[idx_ext + n]
+                prev_value = beta_v[idx_ext + n]* value[idx_ext + n] + (1 - beta_v[idx_ext + n]) * prev_value
+                prev_value = prev_value - rewards[idx]
+            value_mixed.append(prev_value+rewards[indices[i]])
+
+        value_mixed = torch.stack(value_mixed, dim=0)
+
 
         action_log_probs = dist.log_probs(action)
         dist_entropy = dist.entropy().mean()
@@ -195,6 +226,16 @@ class MLPBase(NNBase):
 
         self.critic_linear = init_(nn.Linear(hidden_size, 1))
 
+
+        init_ = lambda m: init(m,
+            nn.init.orthogonal_,
+            lambda x: nn.init.constant_(x, self.init_bias))
+
+        self.beta_net_value = nn.Sequential(
+            init_(nn.Linear(hidden_size, 1)),
+            nn.Sigmoid()
+        )
+
         self.train()
 
     def forward(self, inputs, rnn_hxs, masks):
@@ -206,4 +247,10 @@ class MLPBase(NNBase):
         hidden_critic = self.critic(x)
         hidden_actor = self.actor(x)
 
-        return self.critic_linear(hidden_critic), hidden_actor, rnn_hxs
+        if self.est_value:
+            with torch.no_grad():
+                hidden_value_beta = self.critic(x)
+            beta_value = self.beta_net_value(hidden_value_beta)
+        else:
+            beta_value = torch.ones(inputs.size()[0])
+        return self.critic_linear(hidden_critic), hidden_actor, rnn_hxs,beta_value
