@@ -105,7 +105,7 @@ class Policy(nn.Module):
         dist_entropy = dist.entropy().mean()
         print("beta",beta_v)
         print("Indices ",indices)
-        print(value[indices])
+        print(value[l])
         print(value_mixed)
         return value_mixed, action_log_probs, dist_entropy, rnn_hxs
 
