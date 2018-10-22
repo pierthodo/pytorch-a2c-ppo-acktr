@@ -74,6 +74,7 @@ class Policy(nn.Module):
             for i in reversed(range(self.N_backprop)):
                 if not b-i < lim: # if the index used goes on another process memory than block it
                     tmp.append(b-i)
+            index_ext.append(tmp)
         return index_ext
 
     def evaluate_actions(self, inputs, rnn_hxs, masks, action,indices,rewards):
