@@ -94,9 +94,9 @@ class Policy(nn.Module):
                 idx = indices_ext[idx_ext + n]
                 #prev_value = masks[idx] * prev_value + (1 - masks[idx]) * value[idx_ext + n]
                 prev_value = beta_v[idx_ext + n]* value[idx_ext + n] + (1 - beta_v[idx_ext + n]) * prev_value
-                prev_value = prev_value - rewards[idx]
+                prev_value = prev_value
 
-            value_mixed.append(prev_value+rewards[indices[i]])
+            value_mixed.append(prev_value)
 
         value_mixed = torch.stack(value_mixed, dim=0)
 
