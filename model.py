@@ -70,39 +70,38 @@ class Policy(nn.Module):
         index_ext = []
         for b in indices:
             lim = del_index[int(b/(self.num_steps))]
+            tmp = []
             for i in reversed(range(self.N_backprop)):
-                if b-i < lim: # if the index used goes on another process memory than block it
-                    index_ext.append(lim)
-                else:
-                    index_ext.append(b-i)
+                if not b-i < lim: # if the index used goes on another process memory than block it
+                    tmp.append(b-i)
+
         return index_ext
 
     def evaluate_actions(self, inputs, rnn_hxs, masks, action,indices,rewards):
-        indices_ext = self.get_index(indices)
-        l = range(len(indices_ext))[self.N_backprop - 1::self.N_backprop] ## List of index for the original list
-        value, actor_features, rnn_hxs,beta_v = self.base(inputs[indices_ext], rnn_hxs[indices_ext], masks[indices_ext])
-        dist = self.dist(actor_features[l])
+        #l = range(len(indices_ext))[self.N_backprop - 1::self.N_backprop] ## List of index for the original list
 
+        _, actor_features, _,_ = self.base(inputs[indices], rnn_hxs[indices], masks[indices])
+        dist = self.dist(actor_features[l])
+        action_log_probs = dist.log_probs(action[indices])
+        dist_entropy = dist.entropy().mean()
+
+        indices_ext = self.get_index(indices)
+        indices_ext_flat = [item for sublist in indices_ext for item in sublist]
+        value, _, rnn_hxs,beta_v = self.base(inputs[indices_ext_flat], rnn_hxs[indices_ext_flat], masks[indices_ext_flat])
 
         value_mixed = []
+        idx = 0
         for i in range(len(indices)):
-            idx_ext = i*self.N_backprop
-            idx = indices_ext[idx_ext]
-            prev_value = value[idx_ext]
+            prev_value = value[idx]
+            for p in indices_ext[i]:
+                prev_value = masks[p] * prev_value + (1 - masks[p]) * value[idx]
+                prev_value = beta_v[idx]* value[idx] + (1 - beta_v[idx]) * prev_value
+                prev_value = prev_value - rewards[p]
+                idx += 1
 
-            for n in range(self.N_backprop):
-                idx = indices_ext[idx_ext + n]
-                prev_value = masks[idx] * prev_value + (1 - masks[idx]) * value[idx_ext + n]
-                prev_value = beta_v[idx_ext + n]* value[idx_ext + n] + (1 - beta_v[idx_ext + n]) * prev_value
-                prev_value = prev_value - rewards[idx]
-
-            value_mixed.append(prev_value + rewards[idx])
-            print(idx)
         value_mixed = torch.stack(value_mixed, dim=0)
 
 
-        action_log_probs = dist.log_probs(action[indices])
-        dist_entropy = dist.entropy().mean()
         print("beta",beta_v)
         print("Indices ",indices)
         print(value[l])
