@@ -67,7 +67,7 @@ def main():
                         args.gamma, args.log_dir, args.add_timestep, device, False)
 
     actor_critic = Policy(envs.observation_space.shape, envs.action_space,
-        base_kwargs={'recurrent': args.recurrent_policy})
+        base_kwargs={'recurrent': args.recurrent_policy,'est_value':args.est_value,'init_bias':args.init_bias})
     actor_critic.to(device)
 
     if args.algo == 'a2c':

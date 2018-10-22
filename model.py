@@ -201,8 +201,9 @@ class CNNBase(NNBase):
 
 class MLPBase(NNBase):
     def __init__(self, num_inputs, recurrent=False, hidden_size=64):
-        super(MLPBase, self).__init__(recurrent, num_inputs, hidden_size)
-
+        super(MLPBase, self).__init__(recurrent, num_inputs, hidden_size,est_value,init_bias)
+        self.est_value = est_value
+        self.init_bias = init_bias
         if recurrent:
             num_inputs = hidden_size
 
