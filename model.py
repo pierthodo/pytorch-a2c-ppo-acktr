@@ -102,6 +102,7 @@ class Policy(nn.Module):
 
         action_log_probs = dist.log_probs(action[indices])
         dist_entropy = dist.entropy().mean()
+        print("beta",beta_v)
         print(value[indices])
         print(value_mixed)
         return value_mixed, action_log_probs, dist_entropy, rnn_hxs
