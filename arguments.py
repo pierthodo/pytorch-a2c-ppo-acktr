@@ -65,6 +65,8 @@ def get_args():
                         help='port to run the server on (default: 8097)')
     parser.add_argument('--est-value', action='store_true', default=False,
                     help='estimate action weights')
+    parser.add_argument('--N-backprop',type=int,default=0,
+                        help='Truncate backprop after n step')
     args = parser.parse_args()
 
     args.cuda = not args.no_cuda and torch.cuda.is_available()

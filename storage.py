@@ -22,7 +22,7 @@ class RolloutStorage(object):
         if action_space.__class__.__name__ == 'Discrete':
             self.actions = self.actions.long()
         self.masks = torch.ones(num_steps + 1, num_processes, 1)
-
+        self.beta_v = torch.zeros(num_steps,num_processes,1)
         self.num_steps = num_steps
         self.step = 0
 
@@ -35,6 +35,7 @@ class RolloutStorage(object):
         self.action_log_probs = self.action_log_probs.to(device)
         self.actions = self.actions.to(device)
         self.masks = self.masks.to(device)
+        self.beta_v = self.beta_v.to(device)
 
     def insert(self, obs, recurrent_hidden_states, actions, action_log_probs, value_preds, rewards, masks):
         self.obs[self.step + 1].copy_(obs)
@@ -44,7 +45,7 @@ class RolloutStorage(object):
         self.value_preds[self.step].copy_(value_preds)
         self.rewards[self.step].copy_(rewards)
         self.masks[self.step + 1].copy_(masks)
-
+        self.beta_v[self.step].copy_(beta_v)
         self.step = (self.step + 1) % self.num_steps
 
     def after_update(self):

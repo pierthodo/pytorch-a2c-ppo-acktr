@@ -1,3 +1,4 @@
+from comet_ml import Experiment
 import copy
 import glob
 import os
@@ -27,6 +28,10 @@ if args.recurrent_policy:
         'Recurrent policy is not implemented for ACKTR'
 
 num_updates = int(args.num_frames) // args.num_steps // args.num_processes
+
+experiment = Experiment(api_key="HFFoR5WtTjoHuBGq6lYaZhG0c",
+                        project_name="RLRL", workspace="pierthodo",disabled=args.disable_log)
+experiment.log_multiple_params(vars(args))
 
 torch.manual_seed(args.seed)
 if args.cuda:
@@ -94,7 +99,7 @@ def main():
         for step in range(args.num_steps):
             # Sample actions
             with torch.no_grad():
-                value, action, action_log_prob, recurrent_hidden_states = actor_critic.act(
+                value, action, action_log_prob, recurrent_hidden_states,beta_v = actor_critic.act(
                         rollouts.obs[step],
                         rollouts.recurrent_hidden_states[step],
                         rollouts.masks[step])
@@ -109,7 +114,7 @@ def main():
             # If done then clean the history of observations.
             masks = torch.FloatTensor([[0.0] if done_ else [1.0]
                                        for done_ in done])
-            rollouts.insert(obs, recurrent_hidden_states, action, action_log_prob, value, reward, masks)
+            rollouts.insert(obs, recurrent_hidden_states, action, action_log_prob, value, reward, masks,beta_v)
 
         with torch.no_grad():
             next_value = actor_critic.get_value(rollouts.obs[-1],
@@ -152,6 +157,15 @@ def main():
                        np.min(episode_rewards),
                        np.max(episode_rewards), dist_entropy,
                        value_loss, action_loss))
+            experiment.log_multiple_metrics({"mean reward": np.mean(episode_rewards),
+                                             "median reward": np.median(episode_rewards),
+                                             "min reward": np.min(episode_rewards),
+                                             "max reward": np.max(episode_rewards),
+                                             "Value loss": value_loss, "Action Loss": action_loss,
+                                             "Distribution entropy": dist_entropy,
+                                             "beta_v mean": np.array(rollouts.beta_v.data).mean(),
+                                             "beta_v std": np.array(rollouts.beta_v.data).std()},
+                                            step=j * args.num_steps * args.num_processes)
 
         if (args.eval_interval is not None
                 and len(episode_rewards) > 1
