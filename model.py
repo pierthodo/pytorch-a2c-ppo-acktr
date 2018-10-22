@@ -12,12 +12,13 @@ class Flatten(nn.Module):
 
 
 class Policy(nn.Module):
-    def __init__(self, obs_shape, action_space,num_processes,num_steps, base_kwargs=None):
+    def __init__(self, obs_shape, action_space,num_processes,num_steps,N_backprop, base_kwargs=None):
         super(Policy, self).__init__()
         if base_kwargs is None:
             base_kwargs = {}
         self.num_processes = num_processes
         self.num_steps = num_steps
+        self.N_backprop = N_backprop
         if len(obs_shape) == 3:
             self.base = CNNBase(obs_shape[0], **base_kwargs)
         elif len(obs_shape) == 1:
