@@ -95,7 +95,6 @@ class Policy(nn.Module):
                 #prev_value = masks[idx] * prev_value + (1 - masks[idx]) * value[idx_ext + n]
                 prev_value = beta_v[idx_ext + n]* value[idx_ext + n] + (1 - beta_v[idx_ext + n]) * prev_value
                 prev_value = prev_value
-                print("idx ",idx_ext+n)
 
             value_mixed.append(prev_value)
 
