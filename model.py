@@ -81,7 +81,7 @@ class Policy(nn.Module):
         indices_ext = self.get_index(indices)
         l = range(len(indices_ext))[self.N_backprop - 1::self.N_backprop] ## List of index for the original list
         print(indices_ext)
-        print(l)
+        print(list(l))
         value, actor_features, rnn_hxs,beta_v = self.base(inputs[indices_ext], rnn_hxs[indices_ext], masks[indices_ext])
         dist = self.dist(actor_features[l])
 
@@ -105,7 +105,7 @@ class Policy(nn.Module):
         action_log_probs = dist.log_probs(action[indices])
         dist_entropy = dist.entropy().mean()
 
-        return value, action_log_probs, dist_entropy, rnn_hxs
+        return value_mixed, action_log_probs, dist_entropy, rnn_hxs
 
 
 class NNBase(nn.Module):
