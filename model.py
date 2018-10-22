@@ -12,11 +12,11 @@ class Flatten(nn.Module):
 
 
 class Policy(nn.Module):
-    def __init__(self, obs_shape, action_space, base_kwargs=None):
+    def __init__(self, obs_shape, action_space,num_processes, base_kwargs=None):
         super(Policy, self).__init__()
         if base_kwargs is None:
             base_kwargs = {}
-
+        self.num_processes = num_processes
         if len(obs_shape) == 3:
             self.base = CNNBase(obs_shape[0], **base_kwargs)
         elif len(obs_shape) == 1:
@@ -76,7 +76,7 @@ class Policy(nn.Module):
         return index_ext
 
     def evaluate_actions(self, inputs, rnn_hxs, masks, action,indices,rewards):
-        indices_ext = self.get_index(indices)
+        indices_extended = self.get_index(indices)
         l = range(len(indices_ext))[self.N_backprop - 1::self.N_backprop] ## List of index for the original list
 
         value, actor_features, rnn_hxs,beta_v = self.base(inputs[indices_ext], rnn_hxs[indices_ext], masks[indices_ext])
@@ -87,7 +87,8 @@ class Policy(nn.Module):
         for i in range(len(indices)):
             idx_ext = i*self.N_backprop
             idx = indices_ext[idx_ext]
-            prev_value = prev_value_list[idx]
+            prev_value = value[idx_ext]
+
             for n in range(self.N_backprop):
                 idx = indices_ext[idx_ext + n]
                 prev_value = masks[idx] * prev_value + (1 - masks[idx]) * value[idx_ext + n]
