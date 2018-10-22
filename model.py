@@ -97,7 +97,7 @@ class Policy(nn.Module):
                 prev_value = beta_v[idx]* value[idx] + (1 - beta_v[idx]) * prev_value
                 prev_value = prev_value - rewards[p]
                 idx += 1
-
+            value_mixed.append(prev_value+rewards[p])
         value_mixed = torch.stack(value_mixed, dim=0)
 
 
