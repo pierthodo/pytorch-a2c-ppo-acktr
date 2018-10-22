@@ -82,7 +82,7 @@ class Policy(nn.Module):
         l = range(len(indices_ext))[self.N_backprop - 1::self.N_backprop] ## List of index for the original list
 
         value, actor_features, rnn_hxs,beta_v = self.base(inputs[indices_ext], rnn_hxs[indices_ext], masks[indices_ext])
-        dist = self.dist(actor_features)
+        dist = self.dist(actor_features[l])
 
 
         value_mixed = []
