@@ -74,14 +74,13 @@ class Policy(nn.Module):
             for i in reversed(range(self.N_backprop)):
                 if not b-i < lim: # if the index used goes on another process memory than block it
                     tmp.append(b-i)
-
         return index_ext
 
     def evaluate_actions(self, inputs, rnn_hxs, masks, action,indices,rewards):
         #l = range(len(indices_ext))[self.N_backprop - 1::self.N_backprop] ## List of index for the original list
 
         _, actor_features, _,_ = self.base(inputs[indices], rnn_hxs[indices], masks[indices])
-        dist = self.dist(actor_features[l])
+        dist = self.dist(actor_features)
         action_log_probs = dist.log_probs(action[indices])
         dist_entropy = dist.entropy().mean()
 
