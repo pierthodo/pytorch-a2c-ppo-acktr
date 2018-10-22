@@ -67,6 +67,7 @@ def get_args():
                     help='estimate action weights')
     parser.add_argument('--N-backprop',type=int,default=0,
                         help='Truncate backprop after n step')
+    parser.add_argument('--disable-log', action='store_true', default=False)
     args = parser.parse_args()
 
     args.cuda = not args.no_cuda and torch.cuda.is_available()
