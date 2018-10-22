@@ -87,8 +87,6 @@ class Policy(nn.Module):
 
         indices_ext = self.get_index(indices)
         indices_ext_flat = [item for sublist in indices_ext for item in sublist]
-        print(indices)
-        print(indices_ext_flat)
         value, _, rnn_hxs,beta_v = self.base(inputs[indices_ext_flat], rnn_hxs[indices_ext_flat], masks[indices_ext_flat])
 
         value_mixed = []
@@ -103,11 +101,6 @@ class Policy(nn.Module):
             value_mixed.append(prev_value+rewards[p])
         value_mixed = torch.stack(value_mixed, dim=0)
 
-
-        print("beta",beta_v)
-        print("Indices ",indices)
-        print(value)
-        print(value_mixed)
         return value_mixed, action_log_probs, dist_entropy, rnn_hxs
 
 

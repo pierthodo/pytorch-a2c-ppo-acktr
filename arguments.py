@@ -70,6 +70,7 @@ def get_args():
     parser.add_argument('--disable-log', action='store_true', default=False)
     parser.add_argument('--init-bias',type=float, default=0,
                     help='Optimistic initalization')
+    parser.add_argument('--name',type=str,default="default")
     args = parser.parse_args()
 
     args.cuda = not args.no_cuda and torch.cuda.is_available()
