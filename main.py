@@ -106,7 +106,8 @@ def main():
 
             # Obser reward and next obs
             obs, reward, done, infos = envs.step(action)
-            cum_reward += sum([sum(b) for b in reward.data])
+            print(float(reward.data))
+            cum_reward += sum([sum(b) for b in float(reward.data)])
             for info in infos:
                 if 'episode' in info.keys():
                     episode_rewards.append(info['episode']['r'])
