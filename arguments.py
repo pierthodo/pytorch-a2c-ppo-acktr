@@ -80,8 +80,6 @@ def get_args():
                         help='estimate value weights')
     parser.add_argument('--init-bias',type=float, default=0,
                     help='Optimistic initalization')
-    parser.add_argument('--disable-log', action='store_true', default=False,
-                    help='estimate weights')
     parser.add_argument('--N-backprop',type=int,default=0,
                         help='Truncate backprop after n step')
     parser.add_argument('--disable-log', action='store_true', default=False)
