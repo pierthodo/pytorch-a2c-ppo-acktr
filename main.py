@@ -106,6 +106,7 @@ def main():
 
             # Obser reward and next obs
             obs, reward, done, infos = envs.step(action)
+            print("data" ,reward.data[0][0])
             cum_reward += reward.data
             for info in infos:
                 if 'episode' in info.keys():
