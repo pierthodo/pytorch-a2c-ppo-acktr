@@ -3,6 +3,15 @@ import argparse
 import torch
 
 
+
+def str2bool(v):
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
 def get_args():
     parser = argparse.ArgumentParser(description='RL')
     parser.add_argument('--algo', default='a2c',
@@ -63,14 +72,18 @@ def get_args():
                         help='enable visdom visualization')
     parser.add_argument('--port', type=int, default=8097,
                         help='port to run the server on (default: 8097)')
-    parser.add_argument('--est-value', action='store_true', default=False,
-                    help='estimate action weights')
+
+    parser.add_argument('--name',type=str,default="default")
+
+    parser.add_argument("--est-value", type=str2bool, nargs='?',
+                        const=False, default="False",
+                        help='estimate value weights')
+    parser.add_argument('--init-bias',type=float, default=0,
+                    help='Optimistic initalization')
     parser.add_argument('--N-backprop',type=int,default=0,
                         help='Truncate backprop after n step')
     parser.add_argument('--disable-log', action='store_true', default=False)
-    parser.add_argument('--init-bias',type=float, default=0,
-                    help='Optimistic initalization')
-    parser.add_argument('--name',type=str,default="default")
+
     args = parser.parse_args()
 
     args.cuda = not args.no_cuda and torch.cuda.is_available()
