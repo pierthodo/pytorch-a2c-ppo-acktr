@@ -146,7 +146,7 @@ def main():
             torch.save(save_model, os.path.join(save_path, args.env_name + ".pt"))
 
         total_num_steps = (j + 1) * args.num_processes * args.num_steps
-        print(cum_reward.data)
+        print(cum_reward)
         if j % args.log_interval == 0 and len(episode_rewards) > 1:
             end = time.time()
             print("Updates {}, num timesteps {}, FPS {} \n Last {} training episodes: mean/median reward {:.1f}/{:.1f}, min/max reward {:.1f}/{:.1f}\n".
