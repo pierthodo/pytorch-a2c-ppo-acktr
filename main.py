@@ -106,8 +106,7 @@ def main():
 
             # Obser reward and next obs
             obs, reward, done, infos = envs.step(action)
-            print(float(reward.data))
-            cum_reward += sum([sum(b) for b in float(reward.data)])
+            cum_reward += sum([sum(b) for b in reward.data.numpy()])
             for info in infos:
                 if 'episode' in info.keys():
                     episode_rewards.append(info['episode']['r'])
@@ -128,6 +127,7 @@ def main():
 
         rollouts.after_update()
         print(type(cum_reward))
+        print(cum_reward)
         if j % args.save_interval == 0 and args.save_dir != "":
             save_path = os.path.join(args.save_dir, args.algo)
             try:
