@@ -93,7 +93,7 @@ def main():
     rollouts.to(device)
 
     episode_rewards = deque(maxlen=10)
-
+    cum_reward = 0
     start = time.time()
     for j in range(num_updates):
         for step in range(args.num_steps):
@@ -106,7 +106,7 @@ def main():
 
             # Obser reward and next obs
             obs, reward, done, infos = envs.step(action)
-
+            cum_reward += reward
             for info in infos:
                 if 'episode' in info.keys():
                     episode_rewards.append(info['episode']['r'])
@@ -165,7 +165,7 @@ def main():
                                              "Value loss": value_loss, "Action Loss": action_loss,
                                              "Distribution entropy": dist_entropy,
                                              "beta_v mean": np.array(rollouts.beta_v.data).mean(),
-                                             "beta_v std": np.array(rollouts.beta_v.data).std()},
+                                             "beta_v std": np.array(rollouts.beta_v.data).std(),"cumulative reward":cum_reward},
                                             step=j * args.num_steps * args.num_processes)
 
         if (args.eval_interval is not None
