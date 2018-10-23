@@ -110,7 +110,6 @@ def main():
             for info in infos:
                 if 'episode' in info.keys():
                     episode_rewards.append(info['episode']['r'])
-            print(episode_rewards)
             # If done then clean the history of observations.
             masks = torch.FloatTensor([[0.0] if done_ else [1.0]
                                        for done_ in done])
@@ -127,7 +126,7 @@ def main():
         value_loss, action_loss, dist_entropy = agent.update(rollouts)
 
         rollouts.after_update()
-
+        print(type(cum_reward))
         if j % args.save_interval == 0 and args.save_dir != "":
             save_path = os.path.join(args.save_dir, args.algo)
             try:
