@@ -210,7 +210,7 @@ class CNNBase(NNBase):
                 hidden_value_beta = self.main(inputs / 255.0)
             beta_value = self.beta_net_value(hidden_value_beta)
         else:
-            beta_value = torch.ones(inputs.size()[0])
+            beta_value = torch.ones(masks.size())
         return self.critic_linear(x), x, rnn_hxs,beta_value
 
 
