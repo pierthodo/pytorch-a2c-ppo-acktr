@@ -162,9 +162,10 @@ class NNBase(nn.Module):
 
 
 class CNNBase(NNBase):
-    def __init__(self, num_inputs, recurrent=False, hidden_size=512):
+    def __init__(self, num_inputs, recurrent=False, hidden_size=512,est_value=False,init_bias=0):
         super(CNNBase, self).__init__(recurrent, hidden_size, hidden_size)
-
+        self.est_value = est_value
+        self.init_bias = init_bias
         init_ = lambda m: init(m,
             nn.init.orthogonal_,
             lambda x: nn.init.constant_(x, 0),
@@ -188,6 +189,14 @@ class CNNBase(NNBase):
 
         self.critic_linear = init_(nn.Linear(hidden_size, 1))
 
+        init_ = lambda m: init(m,
+            nn.init.orthogonal_,
+            lambda x: nn.init.constant_(x, self.init_bias))
+
+        self.beta_net_value = nn.Sequential(
+            init_(nn.Linear(hidden_size, 1)),
+            nn.Sigmoid()
+        )
         self.train()
 
     def forward(self, inputs, rnn_hxs, masks):
@@ -196,7 +205,13 @@ class CNNBase(NNBase):
         if self.is_recurrent:
             x, rnn_hxs = self._forward_gru(x, rnn_hxs, masks)
 
-        return self.critic_linear(x), x, rnn_hxs
+        if self.est_value:
+            with torch.no_grad():
+                hidden_value_beta = self.main(inputs / 255.0)
+            beta_value = self.beta_net_value(hidden_value_beta)
+        else:
+            beta_value = torch.ones(inputs.size()[0])
+        return self.critic_linear(x), x, rnn_hxs,beta_value
 
 
 class MLPBase(NNBase):
