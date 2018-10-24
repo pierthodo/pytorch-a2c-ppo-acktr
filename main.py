@@ -30,7 +30,7 @@ if args.recurrent_policy:
 num_updates = int(args.num_frames) // args.num_steps // args.num_processes
 
 experiment = Experiment(api_key="HFFoR5WtTjoHuBGq6lYaZhG0c",
-                        project_name="RLRL", workspace="pierthodo",disabled=args.disable_log)
+                        project_name="estimate-value", workspace="pierthodo",disabled=args.disable_log)
 experiment.log_multiple_params(vars(args))
 
 torch.manual_seed(args.seed)
