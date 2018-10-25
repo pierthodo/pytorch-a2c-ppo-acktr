@@ -13,12 +13,12 @@ class PPO():
                  value_loss_coef,
                  entropy_coef,
                  lr=None,
-                 eps=None,
+                 eps=None,lr_beta,
                  max_grad_norm=None,
                  use_clipped_value_loss=False):
 
         self.actor_critic = actor_critic
-
+        self.lr_beta = lr_beta
         self.clip_param = clip_param
         self.ppo_epoch = ppo_epoch
         self.num_mini_batch = num_mini_batch
@@ -28,6 +28,19 @@ class PPO():
 
         self.max_grad_norm = max_grad_norm
         self.use_clipped_value_loss = use_clipped_value_loss
+
+        self.bias_list = []
+        self.param_list = []
+        for name, param in actor_critic.named_parameters():
+            if "base.beta_net_value" in name:
+                self.bias_list.append(param)
+            else:
+                self.param_list.append(param)
+        self.optimizer = optim.Adam(
+            [{'params': self.param_list},
+             {'params': self.bias_list, 'lr': lr_beta}], lr, eps=eps)
+
+
 
         self.optimizer = optim.Adam(actor_critic.parameters(), lr=lr, eps=eps)
 
