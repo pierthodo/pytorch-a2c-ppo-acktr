@@ -210,7 +210,7 @@ class CNNBase(NNBase):
                 hidden_value_beta = self.main(inputs / 255.0)
             beta_value = self.beta_net_value(hidden_value_beta)
         else:
-            beta_value = torch.ones(masks.size())
+            beta_value = torch.ones_like(masks)
         return self.critic_linear(x), x, rnn_hxs,beta_value
 
 
@@ -268,5 +268,5 @@ class MLPBase(NNBase):
                 hidden_value_beta = self.critic(x)
             beta_value = self.beta_net_value(hidden_value_beta)
         else:
-            beta_value = torch.ones(inputs.size()[0])
+            beta_value = torch.ones_like(masks)
         return self.critic_linear(hidden_critic), hidden_actor, rnn_hxs,beta_value
