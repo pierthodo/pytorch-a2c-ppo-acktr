@@ -99,6 +99,7 @@ def main():
     start = time.time()
     for j in range(num_updates):
         for step in range(args.num_steps):
+            print(prev_value.size())
             # Sample actions
             with torch.no_grad():
                 value, action, action_log_prob, recurrent_hidden_states,beta_v,prev_value = actor_critic.act(
@@ -115,6 +116,7 @@ def main():
             masks = torch.FloatTensor([[0.0] if done_ else [1.0]
                                        for done_ in done])
             #
+
             rollouts.insert(obs, recurrent_hidden_states, action, action_log_prob, value, reward, masks,beta_v,prev_value)
             prev_value = prev_value - reward
         with torch.no_grad():
