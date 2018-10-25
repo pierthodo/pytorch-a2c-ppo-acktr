@@ -13,7 +13,7 @@ class PPO():
                  value_loss_coef,
                  entropy_coef,
                  lr=None,
-                 eps=None,lr_beta,
+                 eps=None,lr_beta=0,
                  max_grad_norm=None,
                  use_clipped_value_loss=False):
 
