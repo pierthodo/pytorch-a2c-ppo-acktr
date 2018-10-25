@@ -48,8 +48,9 @@ class RolloutStorage(object):
         self.rewards[self.step].copy_(rewards)
         self.masks[self.step + 1].copy_(masks)
         self.beta_v[self.step].copy_(beta_v)
-        self.step = (self.step + 1) % self.num_steps
         self.prev_value[self.step].copy_(prev_value)
+
+        self.step = (self.step + 1) % self.num_steps
 
     def after_update(self):
         self.obs[0].copy_(self.obs[-1])
