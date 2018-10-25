@@ -91,6 +91,8 @@ def main():
     obs = envs.reset()
     rollouts.obs[0].copy_(obs)
     rollouts.to(device)
+    prev_value = torch.zeros(rollouts.masks.size()[:2])
+    prev_value.to(device)
 
     episode_rewards = deque(maxlen=10)
     cum_reward = 0
@@ -99,10 +101,10 @@ def main():
         for step in range(args.num_steps):
             # Sample actions
             with torch.no_grad():
-                value, action, action_log_prob, recurrent_hidden_states,beta_v = actor_critic.act(
+                value, action, action_log_prob, recurrent_hidden_states,beta_v,prev_value = actor_critic.act(
                         rollouts.obs[step],
                         rollouts.recurrent_hidden_states[step],
-                        rollouts.masks[step])
+                        rollouts.masks[step],prev_value)
 
             # Obser reward and next obs
             obs, reward, done, infos = envs.step(action)
@@ -113,8 +115,8 @@ def main():
             masks = torch.FloatTensor([[0.0] if done_ else [1.0]
                                        for done_ in done])
             #
-            rollouts.insert(obs, recurrent_hidden_states, action, action_log_prob, value, reward, masks,beta_v)
-
+            rollouts.insert(obs, recurrent_hidden_states, action, action_log_prob, value, reward, masks,beta_v,prev_value)
+            prev_value = prev_value - reward
         with torch.no_grad():
             next_value = actor_critic.get_value(rollouts.obs[-1],
                                                 rollouts.recurrent_hidden_states[-1],
