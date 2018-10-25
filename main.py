@@ -91,7 +91,7 @@ def main():
     obs = envs.reset()
     rollouts.obs[0].copy_(obs)
     rollouts.to(device)
-    prev_value = torch.zeros((1,rollouts.masks.size()[1],1))
+    prev_value = torch.zeros((rollouts.masks.size()[1],1))
     prev_value.to(device)
 
     episode_rewards = deque(maxlen=10)
@@ -105,7 +105,6 @@ def main():
                         rollouts.obs[step],
                         rollouts.recurrent_hidden_states[step],
                         rollouts.masks[step],prev_value)
-            print(value.size())
             # Obser reward and next obs
             obs, reward, done, infos = envs.step(action)
             for info in infos:
