@@ -41,7 +41,15 @@ class PPO():
              {'params': self.bias_list, 'lr': lr_beta}], lr, eps=eps)
 
     def update(self, rollouts):
-        advantages = rollouts.returns[:-1] - rollouts.value_preds[:-1]
+        num_steps, num_processes = rollouts.rewards.size()[0:2]
+        batch_size = num_processes * num_steps
+        values, _, _, _ = self.actor_critic.evaluate_actions(
+            rollouts.obs[:-1].view(-1, *rollouts.obs.size()[2:]), rollouts.recurrent_hidden_states[:-1].view(-1,
+                            rollouts.recurrent_hidden_states.size(-1)),
+                            rollouts.masks[:-1].view(-1, 1), rollouts.actions.view(-1, rollouts.actions.size(-1)),range(batch_size), rollouts.rewards.view(-1, 1))
+
+        advantages = rollouts.returns[:-1] - values
+
         advantages = (advantages - advantages.mean()) / (
             advantages.std() + 1e-5)
 
