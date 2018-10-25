@@ -106,6 +106,7 @@ def main():
                         rollouts.obs[step],
                         rollouts.recurrent_hidden_states[step],
                         rollouts.masks[step],prev_value)
+            print(prev_value.size())
 
             # Obser reward and next obs
             obs, reward, done, infos = envs.step(action)
