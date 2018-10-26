@@ -41,7 +41,7 @@ class PPO():
                 self.param_list.append(param)
         self.optimizer = optim.Adam(
             [{'params': self.param_list},
-             {'params':self.param_value,'lr',lr_value},
+             {'params':self.param_value,'lr':lr_value},
              {'params': self.bias_list, 'lr': lr_beta}], lr, eps=eps)
 
     def update(self, rollouts):
