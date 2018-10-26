@@ -77,7 +77,7 @@ def main():
                                max_grad_norm=args.max_grad_norm)
     elif args.algo == 'ppo':
         agent = algo.PPO(actor_critic, args.clip_param, args.ppo_epoch, args.num_mini_batch,
-                         args.value_loss_coef, args.entropy_coef, lr=args.lr,lr_beta=args.lr_beta,
+                         args.value_loss_coef, args.entropy_coef, lr=args.lr,lr_beta=args.lr_beta,lr_value=args.lr_value,
                                eps=args.eps,
                                max_grad_norm=args.max_grad_norm)
     elif args.algo == 'acktr':

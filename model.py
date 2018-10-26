@@ -190,7 +190,7 @@ class CNNBase(NNBase):
             nn.init.orthogonal_,
             lambda x: nn.init.constant_(x, 0))
 
-        self.critic_linear = init_(nn.Linear(hidden_size, 1))
+        self.critic = init_(nn.Linear(hidden_size, 1))
 
         init_ = lambda m: init(m,
             nn.init.orthogonal_,
@@ -214,7 +214,7 @@ class CNNBase(NNBase):
             beta_value = self.beta_net_value(hidden_value_beta)
         else:
             beta_value = torch.ones_like(masks)
-        return self.critic_linear(x), x, rnn_hxs,beta_value
+        return self.critic(x), x, rnn_hxs,beta_value
 
 
 class MLPBase(NNBase):

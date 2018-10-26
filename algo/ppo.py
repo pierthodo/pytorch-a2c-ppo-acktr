@@ -13,7 +13,7 @@ class PPO():
                  value_loss_coef,
                  entropy_coef,
                  lr=None,
-                 eps=None,lr_beta=0,
+                 eps=None,lr_beta=0,lr_value=0,
                  max_grad_norm=None,
                  use_clipped_value_loss=False):
 
@@ -31,13 +31,17 @@ class PPO():
 
         self.bias_list = []
         self.param_list = []
+        self.param_value = []
         for name, param in actor_critic.named_parameters():
             if "base.beta_net_value" in name:
                 self.bias_list.append(param)
+            elif "base.critic" in name:
+                param_value.append(param)
             else:
                 self.param_list.append(param)
         self.optimizer = optim.Adam(
             [{'params': self.param_list},
+             {'params':self.param_value,'lr',lr_value},
              {'params': self.bias_list, 'lr': lr_beta}], lr, eps=eps)
 
     def update(self, rollouts):

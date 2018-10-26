@@ -72,9 +72,9 @@ def get_args():
                         help='enable visdom visualization')
     parser.add_argument('--port', type=int, default=8097,
                         help='port to run the server on (default: 8097)')
-
+    parser.add_argument('--lr-value',type=float,default=3e-4)
     parser.add_argument('--name',type=str,default="default")
-    parser.add_argument('--lr-beta',type=float,default=0)
+    parser.add_argument('--lr-beta',type=float,default=3e-4)
     parser.add_argument("--est-value", type=str2bool, nargs='?',
                         const=False, default="False",
                         help='estimate value weights')
