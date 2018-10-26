@@ -36,7 +36,7 @@ class PPO():
             if "base.beta_net_value" in name:
                 self.bias_list.append(param)
             elif "base.critic" in name:
-                param_value.append(param)
+                self.param_value.append(param)
             else:
                 self.param_list.append(param)
         self.optimizer = optim.Adam(
