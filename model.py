@@ -104,7 +104,7 @@ class Policy(nn.Module):
             value_mixed.append(prev_value+rewards[p])
         value_mixed = torch.stack(value_mixed, dim=0)
 
-        return value_mixed, action_log_probs, dist_entropy, rnn_hxs
+        return value_mixed, action_log_probs, dist_entropy, rnn_hxs, beta_v
 
 
 class NNBase(nn.Module):
