@@ -165,7 +165,7 @@ def main():
                                              "beta_v mean": np.array(rollouts.beta_v.data).mean(),
                                              "beta_v std": np.array(rollouts.beta_v.data).std(),"cumulative reward":cum_reward,
                                              "value mean": np.array(rollouts.prev_value.data).mean(),
-                                             "temporal variance value": (np.array(rollouts.prev_value.data)[1:] - np.array(rollouts.prev_value.data)[:-1]).mean()},
+                                             "temporal variance value": np.linalg.norm(np.array(rollouts.prev_value.data)[1:] - np.array(rollouts.prev_value.data)[:-1])},
                                             step=j * args.num_steps * args.num_processes)
 
         if (args.eval_interval is not None
