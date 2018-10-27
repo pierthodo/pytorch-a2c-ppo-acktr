@@ -77,7 +77,8 @@ def main():
                                max_grad_norm=args.max_grad_norm)
     elif args.algo == 'ppo':
         agent = algo.PPO(actor_critic, args.clip_param, args.ppo_epoch, args.num_mini_batch,
-                         args.value_loss_coef, args.entropy_coef, lr=args.lr,lr_beta=args.lr_beta,lr_value=args.lr_value,
+                         args.value_loss_coef, args.entropy_coef, delib_coef=args.delib_coef, delib_center=args.delib_center, 
+                         lr=args.lr,lr_beta=args.lr_beta,lr_value=args.lr_value,
                                eps=args.eps,
                                max_grad_norm=args.max_grad_norm)
     elif args.algo == 'acktr':
@@ -92,7 +93,7 @@ def main():
     rollouts.obs[0].copy_(obs)
     rollouts.to(device)
     prev_value = torch.zeros((rollouts.masks.size()[1],1))
-    prev_value.to(device)
+    prev_value = prev_value.to(device)
 
     episode_rewards = deque(maxlen=10)
     cum_reward = 0
@@ -113,10 +114,11 @@ def main():
             # If done then clean the history of observations.
             masks = torch.FloatTensor([[0.0] if done_ else [1.0]
                                        for done_ in done])
-            #
 
             rollouts.insert(obs, recurrent_hidden_states, action, action_log_prob, value, reward, masks,beta_v,prev_value)
+            reward = reward.to(device)
             prev_value = prev_value - reward
+
         with torch.no_grad():
             next_value = actor_critic.get_value(rollouts.obs[-1],
                                                 rollouts.recurrent_hidden_states[-1],
@@ -124,7 +126,7 @@ def main():
 
         rollouts.compute_returns(next_value, args.use_gae, args.gamma, args.tau)
 
-        value_loss, action_loss, dist_entropy = agent.update(rollouts)
+        value_loss, action_loss, dist_entropy, delib_loss = agent.update(rollouts)
 
         rollouts.after_update()
         if j % args.save_interval == 0 and args.save_dir != "":
@@ -160,7 +162,7 @@ def main():
                                              "median reward": np.median(episode_rewards),
                                              "min reward": np.min(episode_rewards),
                                              "max reward": np.max(episode_rewards),
-                                             "Value loss": value_loss, "Action Loss": action_loss,
+                                             "Value loss": value_loss, "Action Loss": action_loss, "Delib loss": delib_loss,
                                              "Distribution entropy": dist_entropy,
                                              "beta_v mean": np.array(rollouts.beta_v.data).mean(),
                                              "beta_v std": np.array(rollouts.beta_v.data).std(),"cumulative reward":cum_reward,

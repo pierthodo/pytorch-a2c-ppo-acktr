@@ -77,15 +77,21 @@ def get_args():
     parser.add_argument('--lr-beta',type=float,default=3e-4)
     parser.add_argument("--est-value", type=str2bool, nargs='?',
                         const=False, default="False",
-                        help='estimate value weights')
+                        help='estimate the beta for the value function')
     parser.add_argument('--init-bias',type=float, default=0,
-                    help='Optimistic initalization')
+                    help='Optimistic initalization for the beta value')
     parser.add_argument('--N-backprop',type=int,default=1,
                         help='Truncate backprop after n step')
     parser.add_argument('--disable-log', action='store_true', default=False)
+    parser.add_argument('--delib-center', type=float, default=0.5, 
+            help='c in the || beta - c || ^ 2 loss')
+    parser.add_argument('--delib-coef', type=float, default=0., 
+            help='lambda in the lambda * || beta - c || ^ 2 loss')
 
     args = parser.parse_args()
 
     args.cuda = not args.no_cuda and torch.cuda.is_available()
+
+    assert args.algo == 'ppo', 'support for other agents not currently available'
 
     return args
