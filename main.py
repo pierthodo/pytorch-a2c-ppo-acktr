@@ -62,7 +62,10 @@ def main():
         from visdom import Visdom
         viz = Visdom(port=args.port)
         win = None
-
+    if args.lr_value == 0:
+        args.lr_value = args.lr
+    if args.lr_beta == 0:
+        args.lr_beta = args.lr
     envs = make_vec_envs(args.env_name, args.seed, args.num_processes,
                         args.gamma, args.log_dir, args.add_timestep, device, False)
 
