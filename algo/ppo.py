@@ -78,7 +78,7 @@ class PPO():
                     rollouts.obs[:-1].view(-1, *rollouts.obs.size()[2:]), rollouts.recurrent_hidden_states[:-1].view(-1,
                     rollouts.recurrent_hidden_states.size(-1)),
                     rollouts.masks[:-1].view(-1, 1), rollouts.actions.view(-1, rollouts.actions.size(-1)),
-                    indices,rollouts.rewards.view(-1,1))
+                    indices,rollouts.rewards.view(-1,1),rollouts.prev_value.view(-1,1))
 
                 ratio = torch.exp(action_log_probs - old_action_log_probs_batch)
                 surr1 = ratio * adv_targ

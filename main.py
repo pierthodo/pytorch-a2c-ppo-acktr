@@ -17,7 +17,7 @@ from arguments import get_args
 from envs import make_vec_envs
 from model import Policy
 from storage import RolloutStorage
-from utils import get_vec_normalize
+from utils import get_vec_normalize,SampEn
 from visualize import visdom_plot
 
 args = get_args()
@@ -77,7 +77,8 @@ def main():
         agent = algo.A2C_ACKTR(actor_critic, args.value_loss_coef,
                                args.entropy_coef, lr=args.lr,
                                eps=args.eps, alpha=args.alpha,
-                               max_grad_norm=args.max_grad_norm)
+                               max_grad_norm=args.max_grad_norm , delib_coef=args.delib_coef, delib_center=args.delib_center,
+                                lr_beta=args.lr_beta,lr_value=args.lr_value,)
     elif args.algo == 'ppo':
         agent = algo.PPO(actor_critic, args.clip_param, args.ppo_epoch, args.num_mini_batch,
                          args.value_loss_coef, args.entropy_coef, delib_coef=args.delib_coef, delib_center=args.delib_center, 
@@ -161,6 +162,7 @@ def main():
                        np.min(episode_rewards),
                        np.max(episode_rewards), dist_entropy,
                        value_loss, action_loss))
+            prev_numpy = np.array(rollouts.prev_value.data)
             experiment.log_multiple_metrics({"mean reward": np.mean(episode_rewards),
                                              "median reward": np.median(episode_rewards),
                                              "min reward": np.min(episode_rewards),
@@ -170,7 +172,7 @@ def main():
                                              "beta_v mean": np.array(rollouts.beta_v.data).mean(),
                                              "beta_v std": np.array(rollouts.beta_v.data).std(),"cumulative reward":cum_reward,
                                              "value mean": np.array(rollouts.prev_value.data).mean(),
-                                             "temporal variance value": np.linalg.norm(np.array(rollouts.prev_value.data)[1:] - np.array(rollouts.prev_value.data)[:-1])},
+                                             "temporal variance value": SampEn(prev_numpy,4,prev_numpy.std()*2)},
                                             step=j * args.num_steps * args.num_processes)
 
         if (args.eval_interval is not None

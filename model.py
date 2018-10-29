@@ -80,7 +80,7 @@ class Policy(nn.Module):
             index_ext.append(tmp)
         return index_ext
 
-    def evaluate_actions(self, inputs, rnn_hxs, masks, action,indices,rewards):
+    def evaluate_actions(self, inputs, rnn_hxs, masks, action,indices,rewards,prev_value_list):
         #l = range(len(indices_ext))[self.N_backprop - 1::self.N_backprop] ## List of index for the original list
 
         _, actor_features, _,_ = self.base(inputs[indices], rnn_hxs[indices], masks[indices])
@@ -95,7 +95,7 @@ class Policy(nn.Module):
         value_mixed = []
         idx = 0
         for i in range(len(indices)):
-            prev_value = value[idx]
+            prev_value = prev_value_list[indices_ext[i][0]]
             for p in indices_ext[i]:
                 prev_value = masks[p] * prev_value + (1 - masks[p]) * value[idx]
                 prev_value = beta_v[idx]* value[idx] + (1 - beta_v[idx]) * prev_value
@@ -103,7 +103,6 @@ class Policy(nn.Module):
                 idx += 1
             value_mixed.append(prev_value+rewards[p])
         value_mixed = torch.stack(value_mixed, dim=0)
-
         return value_mixed, action_log_probs, dist_entropy, rnn_hxs, beta_v
 
 
