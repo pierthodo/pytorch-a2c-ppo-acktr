@@ -165,9 +165,9 @@ def main():
                        np.max(episode_rewards), dist_entropy,
                        value_loss, action_loss))
             prev_numpy = np.array(rollouts.prev_value.data)
-            beta_loss_s= beta_loss_series(np.array(rollouts.prev_value.view(-1,1).data),
-                                                np.array(rollouts.value_preds.view(-1,1).data),
-                                                np.array(rollouts.returns.view(-1,1).data),
+            beta_loss_s= beta_loss_series(np.array(rollouts.prev_value.view(-1,1)[:-1,:].data),
+                                                np.array(rollouts.value_preds.view(-1,1)[:-1,:].data),
+                                                np.array(rollouts.returns.view(-1,1)[:-1,:].data),
                                                 np.array(rollouts.beta_v.view(-1,1).data))
             experiment.log_multiple_metrics({"mean reward": np.mean(episode_rewards),
                                              "median reward": np.median(episode_rewards),
