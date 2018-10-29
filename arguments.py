@@ -92,6 +92,6 @@ def get_args():
 
     args.cuda = not args.no_cuda and torch.cuda.is_available()
 
-    assert args.algo == 'ppo', 'support for other agents not currently available'
+    assert (args.algo == 'ppo' or args.algo == 'a2c'), 'support for other agents not currently available'
 
     return args
