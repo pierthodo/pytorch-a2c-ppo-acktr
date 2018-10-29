@@ -69,5 +69,6 @@ def SampEn(X, m, r):
         if _phi(m) != 0.0:
             acc += -np.log(_phi(m + 1) / _phi(m))
             idx += 1
-    acc /= idx
+    if idx != 0:
+        acc /= idx
     return acc
