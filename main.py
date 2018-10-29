@@ -171,8 +171,7 @@ def main():
                                              "Distribution entropy": dist_entropy,
                                              "beta_v mean": np.array(rollouts.beta_v.data).mean(),
                                              "beta_v std": np.array(rollouts.beta_v.data).std(),"cumulative reward":cum_reward,
-                                             "value mean": np.array(rollouts.prev_value.data).mean(),
-                                             "temporal variance value": SampEn(prev_numpy,4,prev_numpy.std()*2)},
+                                             "value mean": np.array(rollouts.prev_value.data).mean()},
                                             step=j * args.num_steps * args.num_processes)
 
         if (args.eval_interval is not None

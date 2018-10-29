@@ -82,7 +82,6 @@ class Policy(nn.Module):
 
     def evaluate_actions(self, inputs, rnn_hxs, masks, action,indices,rewards,prev_value_list):
         #l = range(len(indices_ext))[self.N_backprop - 1::self.N_backprop] ## List of index for the original list
-
         _, actor_features, _,_ = self.base(inputs[indices], rnn_hxs[indices], masks[indices])
         dist = self.dist(actor_features)
         action_log_probs = dist.log_probs(action[indices])
