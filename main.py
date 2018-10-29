@@ -165,7 +165,7 @@ def main():
                        np.max(episode_rewards), dist_entropy,
                        value_loss, action_loss))
             prev_numpy = np.array(rollouts.prev_value.data)
-            beta_loss_series = beta_loss_series(np.array(rollouts.prev_value.view(-1,1).data),
+            beta_loss_s= beta_loss_series(np.array(rollouts.prev_value.view(-1,1).data),
                                                 np.array(rollouts.value_preds.view(-1,1).data),
                                                 np.array(rollouts.returns.view(-1,1).data),
                                                 np.array(rollouts.beta_v.view(-1,1).data))
@@ -178,7 +178,7 @@ def main():
                                              "beta_v mean": np.array(rollouts.beta_v.data).mean(),
                                              "beta_v std": np.array(rollouts.beta_v.data).std(),"cumulative reward":cum_reward,
                                              "value mean": np.array(rollouts.prev_value.data).mean(),"value std":np.array(rollouts.prev_value.data).std(),
-                                             "beta loss series":beta_loss_series},
+                                             "beta loss series":beta_loss_s},
 
                                             step=j * args.num_steps * args.num_processes)
 
