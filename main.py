@@ -66,6 +66,8 @@ def main():
         args.lr_value = args.lr
     if args.lr_beta == 0:
         args.lr_beta = args.lr
+    if args.est_value == "False":
+        args.N_backprop = 1
     envs = make_vec_envs(args.env_name, args.seed, args.num_processes,
                         args.gamma, args.log_dir, args.add_timestep, device, False)
 
