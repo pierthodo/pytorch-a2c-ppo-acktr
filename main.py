@@ -17,7 +17,7 @@ from arguments import get_args
 from envs import make_vec_envs
 from model import Policy
 from storage import RolloutStorage
-from utils import get_vec_normalize,SampEn
+from utils import get_vec_normalize,SampEn,beta_loss_series
 from visualize import visdom_plot
 
 args = get_args()
@@ -165,6 +165,10 @@ def main():
                        np.max(episode_rewards), dist_entropy,
                        value_loss, action_loss))
             prev_numpy = np.array(rollouts.prev_value.data)
+            beta_loss_series = beta_loss_series(np.array(rollouts.prev_value.view(-1,1).data),
+                                                np.array(rollouts.value_preds.view(-1,1).data),
+                                                np.array(rollouts.returns.view(-1,1).data),
+                                                np.array(rollouts.beta_v.view(-1,1).data))
             experiment.log_multiple_metrics({"mean reward": np.mean(episode_rewards),
                                              "median reward": np.median(episode_rewards),
                                              "min reward": np.min(episode_rewards),
@@ -173,7 +177,9 @@ def main():
                                              "Distribution entropy": dist_entropy,
                                              "beta_v mean": np.array(rollouts.beta_v.data).mean(),
                                              "beta_v std": np.array(rollouts.beta_v.data).std(),"cumulative reward":cum_reward,
-                                             "value mean": np.array(rollouts.prev_value.data).mean(),"value std":np.array(rollouts.prev_value.data).std() },
+                                             "value mean": np.array(rollouts.prev_value.data).mean(),"value std":np.array(rollouts.prev_value.data).std(),
+                                             "beta loss series":beta_loss_series},
+
                                             step=j * args.num_steps * args.num_processes)
 
         if (args.eval_interval is not None

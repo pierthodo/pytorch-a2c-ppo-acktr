@@ -72,3 +72,11 @@ def SampEn(X, m, r):
     if idx != 0:
         acc /= idx
     return acc
+
+def beta_loss_series(prev_value,value,ret,beta):
+    err_v = (value - ret)
+    err_v /= np.sum(err_v)
+    err_prev = (prev_value - ret)
+    err_prev /= np.sum(err_prev)
+    err = (beta) * err_v +(1- beta) * err_prev
+    return err
