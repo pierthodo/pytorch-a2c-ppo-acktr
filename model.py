@@ -106,16 +106,17 @@ class Policy(nn.Module):
             prev_value = prev_value_list[indices_ext[i][0]]
             prev_mean  = prev_mean_list[indices_ext[i][0]]
             for p in indices_ext[i]:
-                prev_value = masks[p] * prev_value + (1 - masks[p]) * value[idx]
-                prev_value = beta_v[idx]* value[idx] + (1 - beta_v[idx]) * prev_value
-                prev_value = prev_value - rewards[p]
+                #prev_value = masks[p] * prev_value + (1 - masks[p]) * value[idx]
+                #prev_value = beta_v[idx]* value[idx] + (1 - beta_v[idx]) * prev_value
+                #prev_value = prev_value - rewards[p]
 
                 prev_mean = masks[p] * prev_mean + (1 - masks[p]) * dist.mean[idx]
                 prev_mean = beta_a[idx]* dist.mean[idx] + (1 - beta_a[idx]) * prev_mean
 
                 idx += 1
             idx_list.append(idx-1)
-            value_mixed.append(prev_value+rewards[p])
+            #value_mixed.append(prev_value+rewards[p])
+            value_mixed.append(value[idx-1])
             mean_mixed.append(prev_mean)
 
         value_mixed = torch.stack(value_mixed, dim=0)
