@@ -83,7 +83,7 @@ def get_args():
     parser.add_argument('--N-backprop',type=int,default=1,
                         help='Truncate backprop after n step')
     parser.add_argument('--disable-log', action='store_true', default=False)
-    parser.add_argument('--delib-center', type=float, default=0.5, 
+    parser.add_argument('--delib-center', type=float, default=0,
             help='c in the || beta - c || ^ 2 loss')
     parser.add_argument('--delib-coef', type=float, default=0., 
             help='lambda in the lambda * || beta - c || ^ 2 loss')
