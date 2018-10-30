@@ -66,7 +66,7 @@ class Policy(nn.Module):
 
         action_log_probs = dist_mixed.log_probs(action)
         dist_entropy = dist_mixed.entropy().mean()
-        return value, action, action_log_probs, rnn_hxs,beta_v,prev_value,mean_mixed
+        return value, action, action_log_probs, rnn_hxs,beta_v,beta_a,prev_value,mean_mixed
 
     def get_value(self, inputs, rnn_hxs, masks):
         value, _, _, _,_ = self.base(inputs, rnn_hxs, masks)

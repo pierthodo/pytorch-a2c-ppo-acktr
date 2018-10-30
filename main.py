@@ -111,7 +111,7 @@ def main():
         for step in range(args.num_steps):
             # Sample actions
             with torch.no_grad():
-                value, action, action_log_prob, recurrent_hidden_states,beta_v,new_prev_value,prev_mean = actor_critic.act(
+                value, action, action_log_prob, recurrent_hidden_states,beta_v,beta_a,new_prev_value,prev_mean = actor_critic.act(
                         rollouts.obs[step],
                         rollouts.recurrent_hidden_states[step],
                         rollouts.masks[step],prev_value,prev_mean)
@@ -124,7 +124,7 @@ def main():
             masks = torch.FloatTensor([[0.0] if done_ else [1.0]
                                        for done_ in done])
 
-            rollouts.insert(obs, recurrent_hidden_states, action, action_log_prob, value, reward, masks,beta_v,prev_value,prev_mean)
+            rollouts.insert(obs, recurrent_hidden_states, action, action_log_prob, value, reward, masks,beta_v,beta_a,prev_value,prev_mean)
             reward = reward.to(device)
             prev_value = new_prev_value - reward
 
@@ -179,6 +179,8 @@ def main():
                                              "max reward": np.max(episode_rewards),
                                              "Value loss": value_loss, "Action Loss": action_loss, "Delib loss": delib_loss,
                                              "Distribution entropy": dist_entropy,
+                                             "beta_a mean": np.array(rollouts.beta_a.data).mean(),
+                                             "beta_a std": np.array(rollouts.beta_a.data).std(),
                                              "beta_v mean": np.array(rollouts.beta_v.data).mean(),
                                              "beta_v std": np.array(rollouts.beta_v.data).std(),"cumulative reward":cum_reward,
                                              "value mean": np.array(rollouts.prev_value.data).mean(),"value std":np.array(rollouts.prev_value.data).std()},
