@@ -66,8 +66,6 @@ class Policy(nn.Module):
 
         action_log_probs = dist_mixed.log_probs(action)
         dist_entropy = dist_mixed.entropy().mean()
-        print(beta_v)
-        print("m" ,prev_value)
         return value, action, action_log_probs, rnn_hxs,beta_v,prev_value,mean_mixed
 
     def get_value(self, inputs, rnn_hxs, masks):
@@ -125,7 +123,6 @@ class Policy(nn.Module):
         dist_mixed = FixedNormal(mean_mixed,dist.stddev[idx_list])
         action_log_probs = dist_mixed.log_probs(action[indices])
         dist_entropy = dist_mixed.entropy().mean()
-        print(value_mixed)
         return value_mixed, action_log_probs, dist_entropy, rnn_hxs, beta_v
 
 

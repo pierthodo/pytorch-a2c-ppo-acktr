@@ -111,7 +111,7 @@ def main():
         for step in range(args.num_steps):
             # Sample actions
             with torch.no_grad():
-                value, action, action_log_prob, recurrent_hidden_states,beta_v,prev_value,prev_mean = actor_critic.act(
+                value, action, action_log_prob, recurrent_hidden_states,beta_v,new_prev_value,prev_mean = actor_critic.act(
                         rollouts.obs[step],
                         rollouts.recurrent_hidden_states[step],
                         rollouts.masks[step],prev_value,prev_mean)
@@ -126,7 +126,7 @@ def main():
 
             rollouts.insert(obs, recurrent_hidden_states, action, action_log_prob, value, reward, masks,beta_v,prev_value,prev_mean)
             reward = reward.to(device)
-            prev_value = prev_value - reward
+            prev_value = new_prev_value - reward
 
         with torch.no_grad():
             next_value = actor_critic.get_value(rollouts.obs[-1],
