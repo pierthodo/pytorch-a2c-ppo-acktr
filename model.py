@@ -60,7 +60,6 @@ class Policy(nn.Module):
 
         action_log_probs = dist.log_probs(action)
         dist_entropy = dist.entropy().mean()
-        print(prev_value)
 
         return value, action, action_log_probs, rnn_hxs,beta_v,prev_value
 
