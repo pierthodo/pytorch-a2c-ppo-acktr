@@ -73,11 +73,16 @@ def get_args():
     parser.add_argument('--port', type=int, default=8097,
                         help='port to run the server on (default: 8097)')
     parser.add_argument('--lr-value',type=float,default=0)
+    parser.add_argument('--lr-action',type=float,default=0)
+
     parser.add_argument('--name',type=str,default="default")
     parser.add_argument('--lr-beta',type=float,default=0)
     parser.add_argument("--est-value", type=str2bool, nargs='?',
                         const=False, default="False",
                         help='estimate the beta for the value function')
+    parser.add_argument("--est-action", type=str2bool, nargs='?',
+                        const=False, default="False",
+                        help='estimate the beta for the action')
     parser.add_argument('--init-bias',type=float, default=0,
                     help='Optimistic initalization for the beta value')
     parser.add_argument('--N-backprop',type=int,default=1,

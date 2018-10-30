@@ -29,9 +29,11 @@ class Policy(nn.Module):
         if action_space.__class__.__name__ == "Discrete":
             num_outputs = action_space.n
             self.dist = Categorical(self.base.output_size, num_outputs)
+            self.continous = False
         elif action_space.__class__.__name__ == "Box":
             num_outputs = action_space.shape[0]
             self.dist = DiagGaussian(self.base.output_size, num_outputs)
+            self.continous = True
         else:
             raise NotImplementedError
 
@@ -47,9 +49,13 @@ class Policy(nn.Module):
     def forward(self, inputs, rnn_hxs, masks):
         raise NotImplementedError
 
-    def act(self, inputs, rnn_hxs, masks,prev_value, deterministic=False):
-        value, actor_features, rnn_hxs,beta_v = self.base(inputs, rnn_hxs, masks)
+    def act(self, inputs, rnn_hxs, masks,prev_value,prev_mean, deterministic=False):
+        value, actor_features, rnn_hxs,beta_v,beta_a = self.base(inputs, rnn_hxs, masks)
         dist = self.dist(actor_features)
+
+        mean = dist.mean
+        mean_mixed = beta_a * mean + (1-beta_a) * prev_mean
+        
 
         if deterministic:
             action = dist.mode()
@@ -216,9 +222,10 @@ class CNNBase(NNBase):
 
 
 class MLPBase(NNBase):
-    def __init__(self, num_inputs, recurrent=False, hidden_size=64,est_value=False,init_bias=0):
+    def __init__(self, num_inputs, recurrent=False, hidden_size=64,est_value=False,est_action=False,init_bias=0):
         super(MLPBase, self).__init__(recurrent, num_inputs, hidden_size)
         self.est_value = est_value
+        self.est_action = est_action
         self.init_bias = init_bias
         if recurrent:
             num_inputs = hidden_size
@@ -253,6 +260,10 @@ class MLPBase(NNBase):
             nn.Sigmoid()
         )
 
+        self.beta_net_action = nn.Sequential(
+            init_(nn.Linear(hidden_size, 1)),
+            nn.Sigmoid()
+        )
         self.train()
 
     def forward(self, inputs, rnn_hxs, masks):
@@ -270,4 +281,12 @@ class MLPBase(NNBase):
             beta_value = self.beta_net_value(hidden_value_beta)
         else:
             beta_value = torch.ones_like(masks)
-        return self.critic_linear(hidden_critic), hidden_actor, rnn_hxs,beta_value
+
+        if self.est_action:
+            with torch.no_grad():
+                hidden_action_beta = self.actor(x)
+            beta_action = self.beta_net_action(hidden_action_beta)
+        else:
+            beta_action = torch.ones_like(masks)
+
+        return self.critic_linear(hidden_critic), hidden_actor, rnn_hxs,beta_value,beta_action

@@ -72,7 +72,7 @@ def main():
                         args.gamma, args.log_dir, args.add_timestep, device, False)
 
     actor_critic = Policy(envs.observation_space.shape, envs.action_space,args.num_processes,args.num_steps,args.N_backprop,
-        base_kwargs={'recurrent': args.recurrent_policy,'est_value':args.est_value,'init_bias':args.init_bias})
+        base_kwargs={'recurrent': args.recurrent_policy,'est_value':args.est_value,'init_bias':args.init_bias,"est_action":args.est_action})
     actor_critic.to(device)
 
     if args.algo == 'a2c':
@@ -84,7 +84,7 @@ def main():
     elif args.algo == 'ppo':
         agent = algo.PPO(actor_critic, args.clip_param, args.ppo_epoch, args.num_mini_batch,
                          args.value_loss_coef, args.entropy_coef, delib_coef=args.delib_coef, delib_center=args.delib_center, 
-                         lr=args.lr,lr_beta=args.lr_beta,lr_value=args.lr_value,
+                         lr=args.lr,lr_beta=args.lr_beta,lr_value=args.lr_value,lr_action = args.lr_action,
                                eps=args.eps,
                                max_grad_norm=args.max_grad_norm)
     elif args.algo == 'acktr':
