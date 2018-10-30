@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from distributions import Categorical, DiagGaussian
+from distributions import Categorical, DiagGaussian,FixedNormal
 from utils import init, init_normc_
 
 
@@ -53,10 +53,9 @@ class Policy(nn.Module):
         value, actor_features, rnn_hxs,beta_v,beta_a = self.base(inputs, rnn_hxs, masks)
         dist = self.dist(actor_features)
 
-        mean = dist.mean
-        mean_mixed = beta_a * mean + (1-beta_a) * prev_mean
-        
-
+        beta_a = beta_a.repeat(1,dist.mean.size()[1])
+        mean_mixed = beta_a * dist.mean + (1-beta_a) * prev_mean
+        dist_mixed = FixedNormal(mean_mixed, dist.stddev)
         if deterministic:
             action = dist.mode()
         else:
@@ -65,13 +64,14 @@ class Policy(nn.Module):
         prev_value = masks * prev_value + (1 - masks) * value
         prev_value = beta_v * value + (1 - beta_v) * prev_value
 
-        action_log_probs = dist.log_probs(action)
-        dist_entropy = dist.entropy().mean()
-
-        return value, action, action_log_probs, rnn_hxs,beta_v,prev_value
+        action_log_probs = dist_mixed.log_probs(action)
+        dist_entropy = dist_mixed.entropy().mean()
+        print(beta_v)
+        print("m" ,prev_value)
+        return value, action, action_log_probs, rnn_hxs,beta_v,prev_value,mean_mixed
 
     def get_value(self, inputs, rnn_hxs, masks):
-        value, _, _, _ = self.base(inputs, rnn_hxs, masks)
+        value, _, _, _,_ = self.base(inputs, rnn_hxs, masks)
         return value
 
     def get_index(self,indices):
@@ -86,28 +86,46 @@ class Policy(nn.Module):
             index_ext.append(tmp)
         return index_ext
 
-    def evaluate_actions(self, inputs, rnn_hxs, masks, action,indices,rewards,prev_value_list):
+    def evaluate_actions(self, inputs, rnn_hxs, masks, action,indices,rewards,prev_value_list,prev_mean_list):
         #l = range(len(indices_ext))[self.N_backprop - 1::self.N_backprop] ## List of index for the original list
-        _, actor_features, _,_ = self.base(inputs[indices], rnn_hxs[indices], masks[indices])
-        dist = self.dist(actor_features)
-        action_log_probs = dist.log_probs(action[indices])
-        dist_entropy = dist.entropy().mean()
+        #_, actor_features, _,_ = self.base(inputs[indices], rnn_hxs[indices], masks[indices])
+        #dist = self.dist(actor_features)
+        #action_log_probs = dist.log_probs(action[indices])
+        #dist_entropy = dist.entropy().mean()
 
         indices_ext = self.get_index(indices)
         indices_ext_flat = [item for sublist in indices_ext for item in sublist]
-        value, _, rnn_hxs,beta_v = self.base(inputs[indices_ext_flat], rnn_hxs[indices_ext_flat], masks[indices_ext_flat])
+        value, actor_features, rnn_hxs,beta_v,beta_a= self.base(inputs[indices_ext_flat], rnn_hxs[indices_ext_flat], masks[indices_ext_flat])
+        dist = self.dist(actor_features)
+        beta_a = beta_a.repeat(1,dist.mean.size()[1])
 
+
+        mean_mixed = []
         value_mixed = []
+        idx_list = []
         idx = 0
         for i in range(len(indices)):
             prev_value = prev_value_list[indices_ext[i][0]]
+            prev_mean  = prev_mean_list[indices_ext[i][0]]
             for p in indices_ext[i]:
                 prev_value = masks[p] * prev_value + (1 - masks[p]) * value[idx]
                 prev_value = beta_v[idx]* value[idx] + (1 - beta_v[idx]) * prev_value
                 prev_value = prev_value - rewards[p]
+
+                prev_mean = masks[p] * prev_mean + (1 - masks[p]) * dist.mean[idx]
+                prev_mean = beta_a[idx]* dist.mean[idx] + (1 - beta_a[idx]) * prev_mean
+
                 idx += 1
+            idx_list.append(idx-1)
             value_mixed.append(prev_value+rewards[p])
+            mean_mixed.append(prev_mean)
+
         value_mixed = torch.stack(value_mixed, dim=0)
+        mean_mixed = torch.stack(mean_mixed,dim=0)
+        dist_mixed = FixedNormal(mean_mixed,dist.stddev[idx_list])
+        action_log_probs = dist_mixed.log_probs(action[indices])
+        dist_entropy = dist_mixed.entropy().mean()
+        print(value_mixed)
         return value_mixed, action_log_probs, dist_entropy, rnn_hxs, beta_v
 
 
@@ -288,5 +306,4 @@ class MLPBase(NNBase):
             beta_action = self.beta_net_action(hidden_action_beta)
         else:
             beta_action = torch.ones_like(masks)
-
         return self.critic_linear(hidden_critic), hidden_actor, rnn_hxs,beta_value,beta_action

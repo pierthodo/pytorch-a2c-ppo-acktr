@@ -35,7 +35,7 @@ if args.est_value == "False":
 num_updates = int(args.num_frames) // args.num_steps // args.num_processes
 
 experiment = Experiment(api_key="HFFoR5WtTjoHuBGq6lYaZhG0c",
-                        project_name="estimate-value", workspace="pierthodo",disabled=args.disable_log)
+                        project_name="estimate-action", workspace="pierthodo",disabled=args.disable_log)
 experiment.log_multiple_params(vars(args))
 
 torch.manual_seed(args.seed)
@@ -99,6 +99,9 @@ def main():
     rollouts.obs[0].copy_(obs)
     rollouts.to(device)
     prev_value = torch.zeros((rollouts.masks.size()[1],1))
+    prev_mean = torch.zeros((rollouts.masks.size()[1],envs.action_space.shape[0]))
+
+    prev_mean = prev_mean.to(device)
     prev_value = prev_value.to(device)
 
     episode_rewards = deque(maxlen=10)
@@ -108,10 +111,10 @@ def main():
         for step in range(args.num_steps):
             # Sample actions
             with torch.no_grad():
-                value, action, action_log_prob, recurrent_hidden_states,beta_v,prev_value = actor_critic.act(
+                value, action, action_log_prob, recurrent_hidden_states,beta_v,prev_value,prev_mean = actor_critic.act(
                         rollouts.obs[step],
                         rollouts.recurrent_hidden_states[step],
-                        rollouts.masks[step],prev_value)
+                        rollouts.masks[step],prev_value,prev_mean)
             # Obser reward and next obs
             obs, reward, done, infos = envs.step(action)
             for info in infos:
@@ -121,7 +124,7 @@ def main():
             masks = torch.FloatTensor([[0.0] if done_ else [1.0]
                                        for done_ in done])
 
-            rollouts.insert(obs, recurrent_hidden_states, action, action_log_prob, value, reward, masks,beta_v,prev_value)
+            rollouts.insert(obs, recurrent_hidden_states, action, action_log_prob, value, reward, masks,beta_v,prev_value,prev_mean)
             reward = reward.to(device)
             prev_value = prev_value - reward
 
@@ -165,11 +168,11 @@ def main():
                        np.max(episode_rewards), dist_entropy,
                        value_loss, action_loss))
             prev_numpy = np.array(rollouts.prev_value.data)
-            beta_loss_s= beta_loss_series(np.array(rollouts.prev_value.view(-1,1)[:-1,:].data),
-                                                np.array(rollouts.value_preds.view(-1,1)[:-1,:].data),
-                                                np.array(rollouts.returns.view(-1,1)[:-1,:].data),
-                                                np.array(rollouts.beta_v.view(-1,1).data))
-            beta_loss_s = beta_loss_s.sum()
+            #beta_loss_s= beta_loss_series(np.array(rollouts.prev_value.view(-1,1)[:-1,:].data),
+            #                                    np.array(rollouts.value_preds.view(-1,1)[:-1,:].data),
+            #                                    np.array(rollouts.returns.view(-1,1)[:-1,:].data),
+            #                                    np.array(rollouts.beta_v.view(-1,1).data))
+            #beta_loss_s = beta_loss_s.sum()
             experiment.log_multiple_metrics({"mean reward": np.mean(episode_rewards),
                                              "median reward": np.median(episode_rewards),
                                              "min reward": np.min(episode_rewards),
@@ -178,8 +181,7 @@ def main():
                                              "Distribution entropy": dist_entropy,
                                              "beta_v mean": np.array(rollouts.beta_v.data).mean(),
                                              "beta_v std": np.array(rollouts.beta_v.data).std(),"cumulative reward":cum_reward,
-                                             "value mean": np.array(rollouts.prev_value.data).mean(),"value std":np.array(rollouts.prev_value.data).std(),
-                                             "beta loss series":beta_loss_s},
+                                             "value mean": np.array(rollouts.prev_value.data).mean(),"value std":np.array(rollouts.prev_value.data).std()},
 
                                             step=j * args.num_steps * args.num_processes)
 
