@@ -108,7 +108,7 @@ def main():
         for step in range(args.num_steps):
             # Sample actions
             with torch.no_grad():
-                value, action, action_log_prob, recurrent_hidden_states,beta_v,prev_value = actor_critic.act(
+                value, action, action_log_prob, recurrent_hidden_states,beta_v,new_prev_value = actor_critic.act(
                         rollouts.obs[step],
                         rollouts.recurrent_hidden_states[step],
                         rollouts.masks[step],prev_value)
@@ -123,7 +123,7 @@ def main():
 
             rollouts.insert(obs, recurrent_hidden_states, action, action_log_prob, value, reward, masks,beta_v,prev_value)
             reward = reward.to(device)
-            prev_value = prev_value - reward
+            prev_value = new_prev_value - reward
 
         with torch.no_grad():
             next_value = actor_critic.get_value(rollouts.obs[-1],
@@ -165,11 +165,11 @@ def main():
                        np.max(episode_rewards), dist_entropy,
                        value_loss, action_loss))
             prev_numpy = np.array(rollouts.prev_value.data)
-            beta_loss_s= beta_loss_series(np.array(rollouts.prev_value.view(-1,1)[:-1,:].data),
-                                                np.array(rollouts.value_preds.view(-1,1)[:-1,:].data),
-                                                np.array(rollouts.returns.view(-1,1)[:-1,:].data),
-                                                np.array(rollouts.beta_v.view(-1,1).data))
-            beta_loss_s = beta_loss_s.sum()
+            #beta_loss_s= beta_loss_series(np.array(rollouts.prev_value.view(-1,1)[:-1,:].data),
+            #                                    np.array(rollouts.value_preds.view(-1,1)[:-1,:].data),
+            #                                    np.array(rollouts.returns.view(-1,1)[:-1,:].data),
+            #                                    np.array(rollouts.beta_v.view(-1,1).data))
+            #beta_loss_s = beta_loss_s.sum()
             experiment.log_multiple_metrics({"mean reward": np.mean(episode_rewards),
                                              "median reward": np.median(episode_rewards),
                                              "min reward": np.min(episode_rewards),
@@ -178,8 +178,8 @@ def main():
                                              "Distribution entropy": dist_entropy,
                                              "beta_v mean": np.array(rollouts.beta_v.data).mean(),
                                              "beta_v std": np.array(rollouts.beta_v.data).std(),"cumulative reward":cum_reward,
-                                             "value mean": np.array(rollouts.prev_value.data).mean(),"value std":np.array(rollouts.prev_value.data).std(),
-                                             "beta loss series":beta_loss_s},
+                                             "value mean": np.array(rollouts.prev_value.data).mean(),"value std":np.array(rollouts.prev_value.data).std()
+                                             },
 
                                             step=j * args.num_steps * args.num_processes)
 

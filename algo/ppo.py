@@ -50,7 +50,7 @@ class PPO():
              {'params': self.bias_list, 'lr': lr_beta}], lr, eps=eps)
 
     def update(self, rollouts):
-        advantages = rollouts.returns[:-1] - rollouts.prev_value[:-1]
+        advantages = rollouts.returns[:-1] - rollouts.prev_value
 
         advantages = (advantages - advantages.mean()) / (
             advantages.std() + 1e-5)

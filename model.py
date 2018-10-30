@@ -55,12 +55,12 @@ class Policy(nn.Module):
             action = dist.mode()
         else:
             action = dist.sample()
-
         prev_value = masks * prev_value + (1 - masks) * value
         prev_value = beta_v * value + (1 - beta_v) * prev_value
 
         action_log_probs = dist.log_probs(action)
         dist_entropy = dist.entropy().mean()
+        print(prev_value)
 
         return value, action, action_log_probs, rnn_hxs,beta_v,prev_value
 
@@ -90,7 +90,6 @@ class Policy(nn.Module):
         indices_ext = self.get_index(indices)
         indices_ext_flat = [item for sublist in indices_ext for item in sublist]
         value, _, rnn_hxs,beta_v = self.base(inputs[indices_ext_flat], rnn_hxs[indices_ext_flat], masks[indices_ext_flat])
-
         value_mixed = []
         idx = 0
         for i in range(len(indices)):
