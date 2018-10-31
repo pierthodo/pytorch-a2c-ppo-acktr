@@ -247,9 +247,22 @@ class MLPBase(NNBase):
             lambda x: nn.init.constant_(x, self.init_bias))
 
         self.beta_net_value = nn.Sequential(
+            init_(nn.Linear(num_inputs, hidden_size)),
+            nn.Tanh(),
+            init_(nn.Linear(hidden_size, hidden_size)),
+            nn.Tanh()
+        )
+
+        self.beta_net_value_linear = nn.Sequential(
             init_(nn.Linear(hidden_size, 1)),
             nn.Sigmoid()
         )
+
+
+        #self.beta_net_value = nn.Sequential(
+        #    init_(nn.Linear(hidden_size, 1)),
+        #    nn.Sigmoid()
+        #)
 
         self.train()
 
@@ -263,9 +276,8 @@ class MLPBase(NNBase):
         hidden_actor = self.actor(x)
 
         if self.est_value:
-            with torch.no_grad():
-                hidden_value_beta = self.critic(x)
-            beta_value = self.beta_net_value(hidden_value_beta)
+            hidden_value_beta = self.beta_net_value(x)
+            beta_value = self.beta_net_value_linear(hidden_value_beta)
         else:
             beta_value = torch.ones_like(masks)
         return self.critic_linear(hidden_critic), hidden_actor, rnn_hxs,beta_value
