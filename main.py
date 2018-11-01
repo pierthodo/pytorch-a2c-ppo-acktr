@@ -11,6 +11,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+from scipy.stats import variation
 
 import algo
 from arguments import get_args
@@ -178,7 +179,8 @@ def main():
                                              "Distribution entropy": dist_entropy,
                                              "beta_v mean": np.array(rollouts.beta_v.data).mean(),
                                              "beta_v std": np.array(rollouts.beta_v.data).std(),"cumulative reward":cum_reward,
-                                             "value mean": np.array(rollouts.prev_value.data).mean(),"value std":np.array(rollouts.prev_value.data).std()
+                                             "value mean": np.array(rollouts.prev_value.data).mean(),"value std":np.array(rollouts.prev_value.data).std(),
+                                             "variation value":variation(np.array(rollouts.prev_value.data))
                                              },
 
                                             step=j * args.num_steps * args.num_processes)
