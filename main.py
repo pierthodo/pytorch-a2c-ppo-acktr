@@ -122,7 +122,7 @@ def main():
             masks = torch.FloatTensor([[0.0] if done_ else [1.0]
                                        for done_ in done])
 
-            rollouts.insert(obs, recurrent_hidden_states, action, action_log_prob, prev_value, reward, masks,beta_v,prev_value)
+            rollouts.insert(obs, recurrent_hidden_states, action, action_log_prob, new_prev_value, reward, masks,beta_v,prev_value)
             reward = reward.to(device)
             prev_value = new_prev_value - reward
 
