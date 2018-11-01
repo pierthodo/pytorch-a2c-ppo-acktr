@@ -171,7 +171,7 @@ def main():
             #                                    np.array(rollouts.returns.view(-1,1)[:-1,:].data),
             #                                    np.array(rollouts.beta_v.view(-1,1).data))
             #beta_loss_s = beta_loss_s.sum()
-            print(variation(np.array(rollouts.prev_value.data)))
+            print(variation(np.array(rollouts.prev_value.data))[0][0])
             experiment.log_multiple_metrics({"mean reward": np.mean(episode_rewards),
                                              "median reward": np.median(episode_rewards),
                                              "min reward": np.min(episode_rewards),
@@ -181,7 +181,7 @@ def main():
                                              "beta_v mean": np.array(rollouts.beta_v.data).mean(),
                                              "beta_v std": np.array(rollouts.beta_v.data).std(),"cumulative reward":cum_reward,
                                              "value mean": np.array(rollouts.prev_value.data).mean(),"value std":np.array(rollouts.prev_value.data).std(),
-                                             "variation value":variation(np.array(rollouts.prev_value.data))
+                                             "variation value":variation(np.array(rollouts.prev_value.data)[0][0])
                                              },
 
                                             step=j * args.num_steps * args.num_processes)
