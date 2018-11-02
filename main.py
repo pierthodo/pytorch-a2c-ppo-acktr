@@ -36,7 +36,8 @@ if args.est_value == "False":
 num_updates = int(args.num_frames) // args.num_steps // args.num_processes
 
 experiment = Experiment(api_key="HFFoR5WtTjoHuBGq6lYaZhG0c",
-                        project_name="estimate-value", workspace="pierthodo",disabled=args.disable_log)
+                        project_name="estimate-value", workspace="pierthodo",disabled=args.disable_log,
+                        log_code=False,auto_output_logging=None)
 experiment.log_multiple_params(vars(args))
 
 torch.manual_seed(args.seed)
