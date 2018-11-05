@@ -89,6 +89,8 @@ def get_args():
             help='lambda in the lambda * || beta - c || ^ 2 loss')
     parser.add_argument('--beta-target', type=str2bool, nargs='?',
                         const=False, default="False",help="Use beta for the target")
+    parser.add_argument('--noise-reward',type=float, default=0,
+                    help='Noisy reward')
     args = parser.parse_args()
 
     args.cuda = not args.no_cuda and torch.cuda.is_available()
