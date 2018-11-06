@@ -38,10 +38,9 @@ num_updates = int(args.num_frames) // args.num_steps // args.num_processes
 experiment = Experiment(api_key="HFFoR5WtTjoHuBGq6lYaZhG0c",
                         project_name="estimate-value", workspace="pierthodo",disabled=args.disable_log,
                         log_code=False,auto_output_logging=None,  \
-                        log_graph=True, auto_param_logging=True, auto_metric_logging=False, parse_args=False, \
+                        log_graph=False, auto_param_logging=True, auto_metric_logging=False, parse_args=True, \
                          log_env_details=False, log_git_metadata=False, \
                         log_git_patch=False)
-experiment.log_multiple_params(vars(args))
 
 torch.manual_seed(args.seed)
 if args.cuda:
@@ -182,13 +181,9 @@ def main():
             #beta_loss_s = beta_loss_s.sum()
             prev_value_np = np.array(rollouts.prev_value.data)
             experiment.log_multiple_metrics({"mean reward": np.mean(episode_rewards),
-                                             "median reward": np.median(episode_rewards),
-                                             "min reward": np.min(episode_rewards),
-                                             "max reward": np.max(episode_rewards),
-                                             "Value loss": value_loss, "Action Loss": action_loss, "Delib loss": delib_loss,
-                                             "Distribution entropy": dist_entropy,
+                                             "Value loss": value_loss, "Action Loss": action_loss,
                                              "beta_v mean": np.array(rollouts.beta_v.data).mean(),
-                                             "beta_v std": np.array(rollouts.beta_v.data).std(),"cumulative reward":cum_reward,
+                                             "beta_v std": np.array(rollouts.beta_v.data).std(),
                                              "value mean": prev_value_np.mean(),"value std":prev_value_np.std(),
                                              "variation value":np.abs(variation(prev_value_np)[0][0]),"variance step value": np.abs(prev_value_np[1:]-prev_value_np[:-1]).mean()
                                              },
