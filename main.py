@@ -12,7 +12,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from scipy.stats import variation
-
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 import algo
 from arguments import get_args
 from envs import make_vec_envs
