@@ -191,8 +191,8 @@ def main():
 
                                             step=j * args.num_steps * args.num_processes)
             if args.scatter:
-                reward = rollouts.reward.data / np.sqrt((np.sum(rollouts.reward.data**2)))
-                plt.scatter(np.arange(rollouts.beta_v.data.shape[0]),reward,c='r')
+                reward = rollouts.rewards.data / np.sqrt((np.sum(rollouts.rewards.data**2)))
+                plt.scatter(np.arange(rollouts.rewards.data.shape[0]),reward,c='r')
                 plt.scatter(np.arange(rollouts.beta_v.data.shape[0]),rollouts.beta_v.data)
                 plt.ylim(0,1)
                 experiment.log_figure( figure_name=str(j * args.num_steps * args.num_processes), figure=None)
