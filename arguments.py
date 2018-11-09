@@ -91,7 +91,7 @@ def get_args():
                         const=False, default="False",help="Use beta for the target")
     parser.add_argument('--noise-reward',type=float, default=0,
                     help='Noisy reward')
-    parser.add_argument('--scatter',default=0,type=float)
+    parser.add_argument('--scatter',default=0,type=float, help='if > 0, value will determine max amt of episodes plotted')
     args = parser.parse_args()
 
     args.cuda = not args.no_cuda and torch.cuda.is_available()

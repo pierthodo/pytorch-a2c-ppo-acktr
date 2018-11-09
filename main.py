@@ -191,11 +191,34 @@ def main():
 
                                             step=j * args.num_steps * args.num_processes)
             if args.scatter:
-                r = np.array(rollouts.rewards.data)*10
+                r = np.array(rollouts.rewards.data)*1000
                 reward = (r / np.sqrt((np.sum(r**2))))
-                plt.scatter(np.arange(rollouts.rewards.data.shape[0]),reward,c='r',s=0.5)
-                plt.scatter(np.arange(rollouts.beta_v.data.shape[0]),rollouts.beta_v.data,s=0.5)
+                # find end of episodes
+                is_done = rollouts.masks.cpu().data.numpy()
+                is_done = np.where(is_done == 0)[0]
+                    
                 plt.ylim(0,1)
+                for value in is_done:
+                    x = 1 #plt.axvline(x=value, linestyle='--')
+              
+                bound = int(min(args.scatter, is_done.shape[0])) + 1
+                colors = plt.cm.get_cmap('hsv', bound)
+                colors = [colors(i) for i in range(bound)]
+
+                for i, value in enumerate(is_done[:-1]):
+                    if i >= args.scatter: 
+                        break
+
+                    rew  = reward[is_done[i]:is_done[i+1]].squeeze()
+                    beta = rollouts.beta_v.data[is_done[i]:is_done[i+1]].cpu().data.numpy().squeeze()
+       
+                    #plt.plot(np.arange(rew.shape[0]), rew, c=colors[i], linestyle='dashed', s=8) #, marker='<')
+                    plt.plot(np.arange(beta.shape[0]), beta, c=colors[i])#, s=8, marker='+')
+                    
+                    plt.scatter(np.arange(rew.shape[0]), rew, c=colors[i], s=12, marker='<')
+                    plt.scatter(np.arange(beta.shape[0]), beta, c='k', s=12, marker='>')
+                    
+
                 experiment.log_figure( figure_name=str(j * args.num_steps * args.num_processes), figure=None)
                 plt.clf()
 
