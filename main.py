@@ -193,7 +193,7 @@ def main():
             if args.scatter:
                 plt.scatter(np.arange(rollouts.beta_v.data.shape[0]),rollouts.beta_v.data)
                 plt.ylim(0,1)
-                experiment.log_figure( figure_name=total_timesteps, figure=None)
+                experiment.log_figure( figure_name=str(j * args.num_steps * args.num_processes), figure=None)
                 plt.clf()
 
         if (args.eval_interval is not None
