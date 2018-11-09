@@ -192,7 +192,7 @@ def main():
                                             step=j * args.num_steps * args.num_processes)
             if args.scatter:
                 r = np.array(rollouts.rewards.data)
-                reward = (r / np.sqrt((np.sum(r**2))))*(r.shape[0])*0.5
+                reward = (r / np.sqrt((np.sum(r**2))))
                 plt.scatter(np.arange(rollouts.rewards.data.shape[0]),reward,c='r')
                 plt.scatter(np.arange(rollouts.beta_v.data.shape[0]),rollouts.beta_v.data)
                 plt.ylim(0,1)
