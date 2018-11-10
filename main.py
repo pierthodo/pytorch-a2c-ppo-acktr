@@ -39,10 +39,9 @@ num_updates = int(args.num_frames) // args.num_steps // args.num_processes
 experiment = Experiment(api_key="HFFoR5WtTjoHuBGq6lYaZhG0c",
                         project_name="estimate-value", workspace="pierthodo",disabled=args.disable_log,
                         log_code=False,auto_output_logging=None,  \
-                        log_graph=False, auto_param_logging=False, auto_metric_logging=False, parse_args=False, \
+                        log_graph=False, auto_param_logging=False, auto_metric_logging=False, parse_args=True, \
                          log_env_details=False, log_git_metadata=False, \
                         log_git_patch=False)
-experiment.log_multiple_params(vars(args))
 torch.manual_seed(args.seed)
 if args.cuda:
     torch.cuda.manual_seed(args.seed)
@@ -191,8 +190,7 @@ def main():
 
                                             step=j * args.num_steps * args.num_processes)
             if args.scatter:
-                r = np.array(rollouts.rewards.data)*1000
-                reward = (r / np.sqrt((np.sum(r**2))))
+                reward = np.array(rollouts.rewards.data)
                 # find end of episodes
                 is_done = rollouts.masks.cpu().data.numpy()
                 is_done = np.where(is_done == 0)[0]
@@ -211,16 +209,20 @@ def main():
 
                     rew  = reward[is_done[i]:is_done[i+1]].squeeze()
                     beta = rollouts.beta_v.data[is_done[i]:is_done[i+1]].cpu().data.numpy().squeeze()
-       
-                    #plt.plot(np.arange(rew.shape[0]), rew, c=colors[i], linestyle='dashed', s=8) #, marker='<')
-                    plt.plot(np.arange(beta.shape[0]), beta, c=colors[i])#, s=8, marker='+')
-                    
-                    plt.scatter(np.arange(rew.shape[0]), rew, c=colors[i], s=12, marker='<')
-                    plt.scatter(np.arange(beta.shape[0]), beta, c='k', s=12, marker='>')
-                    
 
-                experiment.log_figure( figure_name=str(j * args.num_steps * args.num_processes), figure=None)
-                plt.clf()
+                    fig, ax1 = plt.subplots()
+                    ax2 = ax1.twinx()
+                    ax1.set_ylim(0, 1)
+
+                    #plt.plot(np.arange(rew.shape[0]), rew, c=colors[i], linestyle='dashed', s=8) #, marker='<')
+                    ax1.plot(np.arange(beta.shape[0]), beta, c='b')#, s=8, marker='+')
+                    ax2.plot(np.arange(rew.shape[0]), rew, c='r')#, s=8, marker='+')
+
+                    ax2.scatter(np.arange(rew.shape[0]), rew, c=colors[i], s=12, marker='<')
+                    ax1.scatter(np.arange(beta.shape[0]), beta, c='k', s=12, marker='>')
+                    experiment.log_figure( figure_name=str(i)+"_"+str(j * args.num_steps * args.num_processes), figure=None)
+
+                    plt.clf()
 
         if (args.eval_interval is not None
                 and len(episode_rewards) > 1
