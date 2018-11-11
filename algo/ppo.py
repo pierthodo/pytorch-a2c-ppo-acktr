@@ -38,8 +38,8 @@ class PPO():
         self.param_list = []
         self.param_value = []
         for name, param in actor_critic.named_parameters():
-            #if "base.beta_net_value" in name or "base.beta_net_value_linear" in name:
-            if "base.beta_net_value_linear.0.bias" in name:
+            #if "base.beta_net_value_linear.0.bias" in name:
+            if "base.beta_net_value" in name or "base.beta_net_value_linear" in name:
                 self.bias_list.append(param)
             elif "base.critic" in name:
                 self.param_value.append(param)
