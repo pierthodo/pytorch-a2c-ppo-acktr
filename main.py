@@ -139,7 +139,7 @@ def main():
                                                 rollouts.recurrent_hidden_states[-1],
                                                 rollouts.masks[-1]).detach()
 
-        rollouts.compute_returns(next_value, args.use_gae, args.gamma, args.tau)
+        rollouts.compute_returns(next_value, args.use_gae, args.gamma, args.tau,args.beta_lambda)
 
         value_loss, action_loss, dist_entropy, delib_loss = agent.update(rollouts)
 

@@ -57,13 +57,16 @@ class RolloutStorage(object):
         self.recurrent_hidden_states[0].copy_(self.recurrent_hidden_states[-1])
         self.masks[0].copy_(self.masks[-1])
 
-    def compute_returns(self, next_value, use_gae, gamma, tau):
+    def compute_returns(self, next_value, use_gae, gamma, tau,beta_lambda):
         if use_gae:
             self.value_preds[-1] = next_value
             gae = 0
             for step in reversed(range(self.rewards.size(0))):
                 delta = self.rewards[step] + gamma * self.value_preds[step + 1] * self.masks[step + 1] - self.value_preds[step]
-                gae = delta + gamma * tau * self.masks[step + 1] * gae
+                if beta_lambda:
+                    gae = delta + gamma * self.beta_v[step] * self.masks[step + 1] * gae
+                else:
+                    gae = delta + gamma * tau * self.masks[step + 1] * gae
                 self.returns[step] = gae + self.value_preds[step]
         else:
             self.returns[-1] = next_value
