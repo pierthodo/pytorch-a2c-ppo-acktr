@@ -92,7 +92,7 @@ def get_args():
     parser.add_argument('--noise-reward',type=float, default=0,
                     help='Noisy reward')
     parser.add_argument('--scatter',default=0,type=float, help='if > 0, value will determine max amt of episodes plotted')
-    parser.add_argument('--beta_lambda',default=0,type=int,help="Use beta on the lambda target")
+    parser.add_argument('--beta-lambda',default=0,type=int,help="Use beta on the lambda target")
     parser.add_argument('--lr-bias',type=float,default=-1)
 
     args = parser.parse_args()
