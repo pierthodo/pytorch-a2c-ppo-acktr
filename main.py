@@ -88,7 +88,7 @@ def main():
     elif args.algo == 'ppo':
         agent = algo.PPO(actor_critic, args.clip_param, args.ppo_epoch, args.num_mini_batch,
                          args.value_loss_coef, args.entropy_coef, delib_coef=args.delib_coef, delib_center=args.delib_center, 
-                         lr=args.lr,lr_beta=args.lr_beta,lr_value=args.lr_value,
+                         lr=args.lr,lr_beta=args.lr_beta,lr_value=args.lr_value,lr_bias=args.lr_bias,
                                eps=args.eps,
                                max_grad_norm=args.max_grad_norm)
     elif args.algo == 'acktr':
