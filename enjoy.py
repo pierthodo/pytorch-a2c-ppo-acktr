@@ -3,7 +3,7 @@ import os
 
 import numpy as np
 import torch
-
+import time
 from envs import VecPyTorch, make_vec_envs
 from utils import get_render_func, get_vec_normalize
 
@@ -59,11 +59,13 @@ if args.env_name.find('Bullet') > -1:
 
 while True:
     with torch.no_grad():
-        value, action, _, recurrent_hidden_states = actor_critic.act(
-            obs, recurrent_hidden_states, masks, deterministic=args.det)
-
+        #value, action, _, recurrent_hidden_states = actor_critic.act(
+        #    obs, recurrent_hidden_states, masks, deterministic=args.det)
+        value, action, action_log_probs, rnn_hxs, beta_v, prev_value = actor_critic.act(
+            obs, recurrent_hidden_states, masks, 0, deterministic=False)
     # Obser reward and next obs
     obs, reward, done, _ = env.step(action)
+    env.venv.venv.envs[0].env.beta = beta_v.data[0][0]
 
     masks.fill_(0.0 if done else 1.0)
 
