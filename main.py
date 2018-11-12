@@ -32,6 +32,8 @@ if args.lr_value == 0:
     args.lr_value = args.lr
 if args.lr_beta == 0:
     args.lr_beta = args.lr
+if args.lr_bias == 0:
+    args.lr_bias = args.lr
 if args.est_value == "False":
     args.N_backprop = 1
 num_updates = int(args.num_frames) // args.num_steps // args.num_processes

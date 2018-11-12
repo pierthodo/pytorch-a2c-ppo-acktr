@@ -63,6 +63,7 @@ class PPO():
         action_loss_epoch = 0
         dist_entropy_epoch = 0
         delib_loss_epoch = 0
+        print(list(self.actor_critic.base.beta_net_value_linear.named_parameters()))
 
         for e in range(self.ppo_epoch):
             if self.actor_critic.is_recurrent:
