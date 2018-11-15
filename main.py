@@ -211,19 +211,44 @@ def main():
 
                     rew  = reward[is_done[i]:is_done[i+1]].squeeze()
                     beta = rollouts.beta_v.data[is_done[i]:is_done[i+1]].cpu().data.numpy().squeeze()
+                    value = rollouts.value_preds[is_done[i]:is_done[i+1]]
 
+                    # loop over the betas and the values to valculate \tilde{v}
+                    value_tilde = rollouts.prev_value[is_done[i]:is_done[i+1]]
+
+                    """ First graph : value_tilde vs value vs beta """
+                    fig, ax1 = plt.subplots()
+                    ax2 = ax1.twinx()
+                    ax1.set_ylim(0, 1)
+                    
+                    # for visibility, let's scaler the values to the 0, 1 interval
+                    max_val = max(value.max(), value_tilde.max())
+                    min_val = min(value.min(), value_tilde.min())
+                    scale = lambda x : (x - min_val) / (max_val - min_val)
+                    scaled_value = scale(value).squeeze().cpu().data.numpy()
+                    scaled_value_tilde = scale(value_tilde).squeeze().cpu().data.numpy()
+
+                    ax2.plot(np.arange(scaled_value.shape[0]), scaled_value, label='V')
+                    ax2.plot(np.arange(scaled_value.shape[0]), scaled_value_tilde, label='V~')
+                    ax2.plot(np.arange(beta.shape[0]), beta, label='beta')
+                    ax2.legend()
+                    experiment.log_figure( figure_name='V vs V~' + str(i)+"_"+str(j * args.num_steps * args.num_processes), figure=None)
+                    plt.clf()
+
+
+                    """ Second graph : beta vs reward """
                     fig, ax1 = plt.subplots()
                     ax2 = ax1.twinx()
                     ax1.set_ylim(0, 1)
 
                     #plt.plot(np.arange(rew.shape[0]), rew, c=colors[i], linestyle='dashed', s=8) #, marker='<')
-                    ax1.plot(np.arange(beta.shape[0]), beta, c='b')#, s=8, marker='+')
-                    ax2.plot(np.arange(rew.shape[0]), rew, c='r')#, s=8, marker='+')
+                    ax1.plot(np.arange(beta.shape[0]), beta, c='b', label='beta')#, s=8, marker='+')
+                    ax2.plot(np.arange(rew.shape[0]), rew, c='r', label='reward')#, s=8, marker='+')
+                    ax2.legend()
 
                     ax2.scatter(np.arange(rew.shape[0]), rew, c=colors[i], s=12, marker='<')
                     ax1.scatter(np.arange(beta.shape[0]), beta, c='k', s=12, marker='>')
-                    experiment.log_figure( figure_name=str(i)+"_"+str(j * args.num_steps * args.num_processes), figure=None)
-
+                    experiment.log_figure( figure_name='beta vs reward ' + str(i)+"_"+str(j * args.num_steps * args.num_processes), figure=None)
                     plt.clf()
 
         if (args.eval_interval is not None
