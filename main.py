@@ -209,12 +209,27 @@ def main():
                     if i >= args.scatter: 
                         break
 
-                    rew  = reward[is_done[i]:is_done[i+1]].squeeze()
-                    beta = rollouts.beta_v.data[is_done[i]:is_done[i+1]].cpu().data.numpy().squeeze()
-                    value = rollouts.value_preds[is_done[i]:is_done[i+1]]
+                    rew_v  = rollouts.rewards.data[is_done[i]:is_done[i+1]].squeeze()
+                    rew    = reward[is_done[i]:is_done[i+1]].squeeze()
+                    beta_v = rollouts.beta_v.data[is_done[i]:is_done[i+1]]
+                    beta   = beta_v.cpu().data.numpy().squeeze()
+                    value  = rollouts.value_preds[is_done[i]:is_done[i+1]].squeeze()
 
                     # loop over the betas and the values to valculate \tilde{v}
                     value_tilde = rollouts.prev_value[is_done[i]:is_done[i+1]]
+
+                    # we also want to plot the value using a fixed beta
+                    beta_mean = beta_v.mean()
+                    value_mean = []
+                    prev_value = value[0]
+                    for ind in range(len(value) - 1):
+                        v = value[ind + 1]
+                        value_mean_t = beta_mean  * v + (1 - beta_mean) * prev_value
+                        prev_value   = value_mean_t - rew_v[ind + 1]
+                        value_mean  += [value_mean_t]
+
+                    value_mean = torch.stack(value_mean)
+
 
                     """ First graph : value_tilde vs value vs beta """
                     fig, ax1 = plt.subplots()
@@ -225,11 +240,13 @@ def main():
                     max_val = max(value.max(), value_tilde.max())
                     min_val = min(value.min(), value_tilde.min())
                     scale = lambda x : (x - min_val) / (max_val - min_val)
-                    scaled_value = scale(value).squeeze().cpu().data.numpy()
-                    scaled_value_tilde = scale(value_tilde).squeeze().cpu().data.numpy()
+                    scaled_value = scale(value).squeeze().cpu().data.numpy()[1:]
+                    scaled_value_tilde = scale(value_tilde).squeeze().cpu().data.numpy()[1:]
+                    scaled_value_mean  = scale(value_mean).cpu().data.numpy()
 
                     ax2.plot(np.arange(scaled_value.shape[0]), scaled_value, label='V')
                     ax2.plot(np.arange(scaled_value.shape[0]), scaled_value_tilde, label='V~')
+                    ax2.plot(np.arange(scaled_value.shape[0]), scaled_value_mean, label='V_mean')
                     ax2.plot(np.arange(beta.shape[0]), beta, label='beta')
                     ax2.legend()
                     experiment.log_figure( figure_name='V vs V~' + str(i)+"_"+str(j * args.num_steps * args.num_processes), figure=None)
