@@ -184,8 +184,8 @@ def main():
             #                                    np.array(rollouts.beta_v.view(-1,1).data))
             #beta_loss_s = beta_loss_s.sum()
             # Calculate the loss with and without beta 
-            loss_v = np.mean((value_numpy - rollouts)**2)
-            loss_v_tilde =  np.mean((prev_numpy - rollouts)**2)
+            loss_v = np.mean((value_numpy - return_numpy)**2)
+            loss_v_tilde =  np.mean((prev_numpy - return_numpy)**2)
             #loss_v_mean = np.mean((prev_numpy - rollouts)**2) TODO 
             #
 
