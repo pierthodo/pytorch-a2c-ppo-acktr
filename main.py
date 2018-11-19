@@ -175,19 +175,29 @@ def main():
                        np.min(episode_rewards),
                        np.max(episode_rewards), dist_entropy,
                        value_loss, action_loss))
-            prev_numpy = np.array(rollouts.prev_value.data)
+            prev_numpy = np.array(rollouts.prev_value.data.squeeze())
+            return_numpy = np.array(rollouts.returns.data.squeeze())
+            value_numpy =  np.array(rollouts.value_preds.data.squeeze())
             #beta_loss_s= beta_loss_series(np.array(rollouts.prev_value.view(-1,1)[:-1,:].data),
             #                                    np.array(rollouts.value_preds.view(-1,1)[:-1,:].data),
             #                                    np.array(rollouts.returns.view(-1,1)[:-1,:].data),
             #                                    np.array(rollouts.beta_v.view(-1,1).data))
             #beta_loss_s = beta_loss_s.sum()
+            # Calculate the loss with and without beta 
+            loss_v = np.mean((value_numpy - rollouts)**2)
+            loss_v_tilde =  np.mean((prev_numpy - rollouts)**2)
+            #loss_v_mean = np.mean((prev_numpy - rollouts)**2) TODO 
+            #
+
+
             prev_value_np = np.array(rollouts.prev_value.data)
             experiment.log_multiple_metrics({"mean reward": np.mean(episode_rewards),
                                              "Value loss": value_loss, "Action Loss": action_loss,
                                              "beta_v mean": np.array(rollouts.beta_v.data).mean(),
                                              "beta_v std": np.array(rollouts.beta_v.data).std(),
                                              "value mean": prev_value_np.mean(),"value std":prev_value_np.std(),
-                                             "variation value":np.abs(variation(prev_value_np)[0][0]),"variance step value": np.abs(prev_value_np[1:]-prev_value_np[:-1]).mean()
+                                             "variation value":np.abs(variation(prev_value_np)[0][0]),"variance step value": np.abs(prev_value_np[1:]-prev_value_np[:-1]).mean(),
+                                             "Error target - v":loss_v,"Error target - v_tilde":loss_v_tilde
                                              },
 
                                             step=j * args.num_steps * args.num_processes)
