@@ -176,7 +176,7 @@ def main():
                        np.max(episode_rewards), dist_entropy,
                        value_loss, action_loss))
             prev_numpy = np.array(rollouts.prev_value.data.squeeze())
-            return_numpy = np.array(rollouts.returns.data.squeeze())
+            return_numpy = np.array(rollouts.returns.data.squeeze())[:-1]
             value_numpy =  np.array(rollouts.value_preds.data.squeeze())
             #beta_loss_s= beta_loss_series(np.array(rollouts.prev_value.view(-1,1)[:-1,:].data),
             #                                    np.array(rollouts.value_preds.view(-1,1)[:-1,:].data),
