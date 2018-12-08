@@ -47,10 +47,8 @@ class Policy(nn.Module):
     def forward(self, inputs, rnn_hxs, masks):
         raise NotImplementedError
 
-    def act(self, inputs, rnn_hxs, masks,prev_value,done, deterministic=False):
+    def act(self, inputs, rnn_hxs, masks,prev_value, deterministic=False):
         value, actor_features, rnn_hxs,beta_v = self.base(inputs, rnn_hxs, masks)
-        if done:
-            beta_v = torch.ones_like(beta_v)
         dist = self.dist(actor_features)
 
         if deterministic:

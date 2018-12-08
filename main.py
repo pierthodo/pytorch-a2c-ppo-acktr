@@ -117,7 +117,7 @@ def main():
                 value, action, action_log_prob, recurrent_hidden_states,beta_v,new_prev_value = actor_critic.act(
                         rollouts.obs[step],
                         rollouts.recurrent_hidden_states[step],
-                        rollouts.masks[step],prev_value,done)
+                        rollouts.masks[step],prev_value)
             # Obser reward and next obs
             obs, reward, done, infos = envs.step(action)
             for info in infos:
