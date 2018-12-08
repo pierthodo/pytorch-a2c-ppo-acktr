@@ -224,6 +224,7 @@ def main():
                     beta_v = rollouts.beta_v.data[is_done[i]:is_done[i+1]]
                     beta   = beta_v.cpu().data.numpy().squeeze()
                     value  = rollouts.value_preds[is_done[i]:is_done[i+1]].squeeze()
+                    target = rollouts.returns.data[is_done[i]:is_done[i+1]].squeeze()
 
                     # loop over the betas and the values to valculate \tilde{v}
                     value_tilde = rollouts.prev_value[is_done[i]:is_done[i+1]]
@@ -253,11 +254,13 @@ def main():
                     scaled_value = scale(value).squeeze().cpu().data.numpy()[1:]
                     scaled_value_tilde = scale(value_tilde).squeeze().cpu().data.numpy()[1:]
                     scaled_value_mean  = scale(value_mean).cpu().data.numpy()
+                    scaled_target = scale(target).cpu().data.numpy()
 
                     ax2.plot(np.arange(scaled_value.shape[0]), scaled_value, label='V')
                     ax2.plot(np.arange(scaled_value.shape[0]), scaled_value_tilde, label='V~')
                     ax2.plot(np.arange(scaled_value.shape[0]), scaled_value_mean, label='V_mean')
                     ax2.plot(np.arange(beta.shape[0]), beta, label='beta')
+                    ax2.plot(np.arange(scaled_target.shape[0]), scaled_target, label='target')
                     ax2.legend()
                     experiment.log_figure( figure_name='V vs V~' + str(i)+"_"+str(j * args.num_steps * args.num_processes), figure=None)
                     plt.clf()

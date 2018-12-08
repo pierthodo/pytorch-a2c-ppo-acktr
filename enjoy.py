@@ -58,11 +58,13 @@ if args.env_name.find('Bullet') > -1:
             torsoId = i
 
 while True:
+    time.sleep(0.1)
     with torch.no_grad():
         #value, action, _, recurrent_hidden_states = actor_critic.act(
         #    obs, recurrent_hidden_states, masks, deterministic=args.det)
         value, action, action_log_probs, rnn_hxs, beta_v, prev_value = actor_critic.act(
-            obs, recurrent_hidden_states, masks, 0, deterministic=False)
+            obs, recurrent_hidden_states, masks, 0, deterministic=True)
+    print(beta_v)
     # Obser reward and next obs
     obs, reward, done, _ = env.step(action)
     env.venv.venv.envs[0].env.beta = beta_v.data[0][0]
