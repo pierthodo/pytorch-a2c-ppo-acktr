@@ -258,7 +258,7 @@ def main():
 
                     ax2.plot(np.arange(scaled_value.shape[0]), scaled_value, label='V')
                     ax2.plot(np.arange(scaled_value.shape[0]), scaled_value_tilde, label='V~')
-                    ax2.plot(np.arange(scaled_value.shape[0]), scaled_value_mean, label='V_mean')
+                    #ax2.plot(np.arange(scaled_value.shape[0]), scaled_value_mean, label='V_mean')
                     ax2.plot(np.arange(beta.shape[0]), beta, label='beta')
                     ax2.plot(np.arange(scaled_target.shape[0]), scaled_target, label='target')
                     ax2.legend()
