@@ -319,6 +319,16 @@ def main():
                 for info in infos:
                     if 'episode' in info.keys():
                         eval_episode_rewards.append(info['episode']['r'])
+                        eval_envs = make_vec_envs(
+                            args.env_name, args.seed + args.num_processes + len(eval_episode_rewards)
+                            , args.num_processes,
+                            args.gamma, eval_log_dir, args.add_timestep, device, True)
+
+                        vec_norm = get_vec_normalize(eval_envs)
+                        if vec_norm is not None:
+                            vec_norm.eval()
+                            vec_norm.ob_rms = get_vec_normalize(envs).ob_rms
+                        obs = eval_envs.reset()
 
             eval_envs.close()
 
