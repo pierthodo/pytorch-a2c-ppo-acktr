@@ -294,6 +294,8 @@ def main():
                 vec_norm.ob_rms = get_vec_normalize(envs).ob_rms
 
             eval_episode_rewards = []
+            prev_value = torch.zeros((rollouts.masks.size()[1], 1))
+            prev_value = prev_value.to(device)
 
             obs = eval_envs.reset()
             eval_recurrent_hidden_states = torch.zeros(args.num_processes,
@@ -302,8 +304,12 @@ def main():
 
             while len(eval_episode_rewards) < 10:
                 with torch.no_grad():
-                    _, action, _, eval_recurrent_hidden_states = actor_critic.act(
-                        obs, eval_recurrent_hidden_states, eval_masks, deterministic=True)
+                    _, action, _, eval_recurrent_hidden_states, _, _ = actor_critic.act(
+                        obs,
+                        eval_recurrent_hidden_states,
+                        eval_masks, prev_value,deterministic=True)
+                    #_, action, _, eval_recurrent_hidden_states = actor_critic.act(
+                    #    obs, eval_recurrent_hidden_states, eval_masks, deterministic=True)
 
                 # Obser reward and next obs
                 obs, reward, done, infos = eval_envs.step(action)
