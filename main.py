@@ -319,7 +319,8 @@ def main():
             print(" Evaluation using {} episodes: mean reward {:.5f}\n".
                 format(len(eval_episode_rewards),
                        np.mean(eval_episode_rewards)))
-
+            experiment.log_multiple_metrics({"Generalization Error":np.mean(episode_rewards)-np.mean(eval_episode_rewards)},
+                                            step=j * args.num_steps * args.num_processes)
         if args.vis and j % args.vis_interval == 0:
             try:
                 # Sometimes monitor doesn't properly flush the outputs
