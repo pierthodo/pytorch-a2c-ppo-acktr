@@ -40,9 +40,9 @@ num_updates = int(args.num_frames) // args.num_steps // args.num_processes
 
 experiment = Experiment(api_key="HFFoR5WtTjoHuBGq6lYaZhG0c",
                         project_name="estimate-value", workspace="pierthodo",disabled=args.disable_log,
-                        log_code=False,  \
-                        log_graph=False, auto_param_logging=False, parse_args=True, \
-                         log_git_metadata=False, \
+                        log_code=False,auto_output_logging=None,  \
+                        log_graph=False, auto_param_logging=False,parse_args=True, \
+                        log_git_metadata=False, \
                         log_git_patch=False)
 torch.manual_seed(args.seed)
 if args.cuda:
