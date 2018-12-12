@@ -42,7 +42,7 @@ experiment = Experiment(api_key="HFFoR5WtTjoHuBGq6lYaZhG0c",
                         project_name="estimate-value", workspace="pierthodo",disabled=args.disable_log,
                         log_code=False,  \
                         log_graph=False, auto_param_logging=False, parse_args=True, \
-                         log_env_details=False, log_git_metadata=False, \
+                         log_git_metadata=False, \
                         log_git_patch=False)
 torch.manual_seed(args.seed)
 if args.cuda:
