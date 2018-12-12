@@ -161,10 +161,12 @@ class NNBase(nn.Module):
 
 
 class CNNBase(NNBase):
-    def __init__(self, num_inputs, recurrent=False, hidden_size=512,est_value=False,init_bias=0):
+    def __init__(self, num_inputs, recurrent=False, hidden_size=512,est_value=False,init_bias=0,beta_fixed=1):
         super(CNNBase, self).__init__(recurrent, hidden_size, hidden_size)
         self.est_value = est_value
         self.init_bias = init_bias
+        self.beta_fixed = beta_fixed
+
         init_ = lambda m: init(m,
             nn.init.orthogonal_,
             lambda x: nn.init.constant_(x, 0),
@@ -192,7 +194,7 @@ class CNNBase(NNBase):
             nn.init.orthogonal_,
             lambda x: nn.init.constant_(x, self.init_bias))
 
-        self.beta_net_value = nn.Sequential(
+        self.beta_net_value_linear = nn.Sequential(
             init_(nn.Linear(hidden_size, 1)),
             nn.Sigmoid()
         )
@@ -207,7 +209,7 @@ class CNNBase(NNBase):
         if self.est_value:
             with torch.no_grad():
                 hidden_value_beta = self.main(inputs / 255.0)
-            beta_value = self.beta_net_value(hidden_value_beta)
+            beta_value = self.beta_net_value_linear(hidden_value_beta)
         else:
             beta_value = torch.ones_like(masks)
         return self.critic(x), x, rnn_hxs,beta_value
