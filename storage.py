@@ -1,5 +1,6 @@
 import torch
 from torch.utils.data.sampler import BatchSampler, SubsetRandomSampler
+from torchvision import transforms
 
 
 def _flatten_helper(T, N, _tensor):
@@ -57,14 +58,19 @@ class RolloutStorage(object):
         self.recurrent_hidden_states[0].copy_(self.recurrent_hidden_states[-1])
         self.masks[0].copy_(self.masks[-1])
 
+    def normalize(self,x):
+        x_normed = (x / x.sum(0, keepdim=True)[0])*self.num_steps
+        return x_normed
+
     def compute_returns(self, next_value, use_gae, gamma, tau,beta_lambda):
+        beta_norm = self.normalize(self.beta_v)
         if use_gae:
             self.value_preds[-1] = next_value
             gae = 0
             for step in reversed(range(self.rewards.size(0))):
                 delta = self.rewards[step] + gamma * self.value_preds[step + 1] * self.masks[step + 1] - self.value_preds[step]
                 if beta_lambda:
-                    gae = self.beta_v[step]*delta + gamma * tau * self.masks[step + 1] * gae
+                    gae = beta_norm[step]*delta + gamma * tau * self.masks[step + 1] * gae
                 else:
                     gae = delta + gamma * tau * self.masks[step + 1] * gae
                 self.returns[step] = gae + self.value_preds[step]
