@@ -1,3 +1,6 @@
+# import comet_ml in the top of your file
+from comet_ml import Experiment
+
 import copy
 import glob
 import os
@@ -23,9 +26,15 @@ from a2c_ppo_acktr.visualize import visdom_plot
 args = get_args()
 
 assert args.algo in ['a2c', 'ppo', 'acktr']
-if args.recurrent_policy:
-    assert args.algo in ['a2c', 'ppo'], \
-        'Recurrent policy is not implemented for ACKTR'
+assert not args.recurrent_policy, \
+        'Recurrent policy is not implemented'
+
+assert args.algo == "a2c" , "Algo not implemented"
+
+
+experiment = Experiment(api_key="HFFoR5WtTjoHuBGq6lYaZhG0c",
+                        project_name="pg-reg", workspace="pierthodo",disabled=args.disable_log,)
+
 
 num_updates = int(args.num_env_steps) // args.num_steps // args.num_processes
 
@@ -66,7 +75,7 @@ def main():
                         args.gamma, args.log_dir, args.add_timestep, device, False)
 
     actor_critic = Policy(envs.observation_space.shape, envs.action_space,
-        base_kwargs={'recurrent': args.recurrent_policy})
+        base_kwargs={'recurrent': args.recurrent_policy,'est_beta_actor':args.est_beta_actor})
     actor_critic.to(device)
 
     if args.algo == 'a2c':
@@ -94,6 +103,7 @@ def main():
     episode_rewards = deque(maxlen=10)
 
     start = time.time()
+    prev_action_mean = None
     for j in range(num_updates):
 
         if args.use_linear_lr_decay:
@@ -110,10 +120,10 @@ def main():
         for step in range(args.num_steps):
             # Sample actions
             with torch.no_grad():
-                value, action, action_log_prob, recurrent_hidden_states = actor_critic.act(
+                value, action, action_log_prob, recurrent_hidden_states,prev_action_mean = actor_critic.act(
                         rollouts.obs[step],
                         rollouts.recurrent_hidden_states[step],
-                        rollouts.masks[step])
+                        rollouts.masks[step],prev_action_mean)
 
             # Obser reward and next obs
             obs, reward, done, infos = envs.step(action)
@@ -169,7 +179,11 @@ def main():
                        np.min(episode_rewards),
                        np.max(episode_rewards), dist_entropy,
                        value_loss, action_loss))
+        experiment.log_multiple_metrics({"mean reward": np.mean(episode_rewards),
+                                         "Value loss": value_loss, "Action Loss": action_loss,
+                                         },
 
+                                        step=j * args.num_steps * args.num_processes)
         if (args.eval_interval is not None
                 and len(episode_rewards) > 1
                 and j % args.eval_interval == 0):

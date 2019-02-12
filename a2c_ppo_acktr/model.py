@@ -51,10 +51,11 @@ class Policy(nn.Module):
     def forward(self, inputs, rnn_hxs, masks):
         raise NotImplementedError
 
-    def act(self, inputs, rnn_hxs, masks, deterministic=False):
-        value, actor_features, rnn_hxs = self.base(inputs, rnn_hxs, masks)
-        dist = self.dist(actor_features)
+    def act(self, inputs, rnn_hxs, masks, prev_action_mean, deterministic=False):
+        value, actor_features, rnn_hxs , beta_actor = self.base(inputs, rnn_hxs, masks)
 
+        dist = self.dist(actor_features,prev_action_mean,beta_actor)
+        action_mean = dist.loc
         if deterministic:
             action = dist.mode()
         else:
@@ -63,20 +64,31 @@ class Policy(nn.Module):
         action_log_probs = dist.log_probs(action)
         dist_entropy = dist.entropy().mean()
 
-        return value, action, action_log_probs, rnn_hxs
+        return value, action, action_log_probs, rnn_hxs, action_mean
 
     def get_value(self, inputs, rnn_hxs, masks):
-        value, _, _ = self.base(inputs, rnn_hxs, masks)
+        value, _, _, _ = self.base(inputs, rnn_hxs, masks)
         return value
 
-    def evaluate_actions(self, inputs, rnn_hxs, masks, action):
-        value, actor_features, rnn_hxs = self.base(inputs, rnn_hxs, masks)
-        dist = self.dist(actor_features)
+    def evaluate_actions(self, inputs, rnn_hxs, masks, action): #TODO fix masks overlapp between threads
+        value_list = []
+        action_log_probs = []
+        dist_entropy = []
+        prev_action_mean = None
 
-        action_log_probs = dist.log_probs(action)
-        dist_entropy = dist.entropy().mean()
+        for i in range(inputs.size()[0]):
+            value, actor_features, _, betas_actor = self.base(inputs[i,:,:], rnn_hxs, masks[i,:,:])
+            value_list.append(value)
 
-        return value, action_log_probs, dist_entropy, rnn_hxs
+            dist= self.dist(actor_features, prev_action_mean, betas_actor)
+            prev_action_mean = dist.loc
+            action_log_probs.append(dist.log_probs(action[i,:,:]))
+            dist_entropy.append(dist.entropy())
+
+        action_log_probs = torch.stack(action_log_probs)
+        dist_entropy = torch.stack(dist_entropy).mean()
+        v = torch.stack(value_list)
+        return torch.stack(value_list), action_log_probs, dist_entropy, rnn_hxs
 
 
 class NNBase(nn.Module):
@@ -209,9 +221,9 @@ class CNNBase(NNBase):
 
 
 class MLPBase(NNBase):
-    def __init__(self, num_inputs, recurrent=False, hidden_size=64):
+    def __init__(self, num_inputs, recurrent=False, hidden_size=64,init_bias = 3,est_beta_actor=True):
         super(MLPBase, self).__init__(recurrent, num_inputs, hidden_size)
-
+        self.est_beta_actor = est_beta_actor
         if recurrent:
             num_inputs = hidden_size
 
@@ -236,6 +248,21 @@ class MLPBase(NNBase):
 
         self.critic_linear = init_(nn.Linear(hidden_size, 1))
 
+        init_ = lambda m: init(m,
+            nn.init.orthogonal_,
+            lambda x: nn.init.constant_(x, init_bias))
+
+        self.beta_net_actor = nn.Sequential(
+            init_(nn.Linear(num_inputs, hidden_size)),
+            nn.Tanh(),
+            init_(nn.Linear(hidden_size, hidden_size)),
+            nn.Tanh()
+        )
+
+        self.beta_net_actor_linear = nn.Sequential(
+            init_(nn.Linear(hidden_size, 1)),
+            nn.Sigmoid()
+        )
         self.train()
 
     def forward(self, inputs, rnn_hxs, masks):
@@ -247,4 +274,11 @@ class MLPBase(NNBase):
         hidden_critic = self.critic(x)
         hidden_actor = self.actor(x)
 
-        return self.critic_linear(hidden_critic), hidden_actor, rnn_hxs
+
+        if self.est_beta_actor:
+            hidden_actor_beta = self.beta_net_actor(x)
+            beta_actor = self.beta_net_actor_linear(hidden_actor_beta)
+        else:
+            beta_actor = torch.ones_like(masks)
+
+        return self.critic_linear(hidden_critic), hidden_actor, rnn_hxs,beta_actor

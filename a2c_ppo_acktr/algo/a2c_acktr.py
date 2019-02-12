@@ -27,8 +27,20 @@ class A2C_ACKTR():
         if acktr:
             self.optimizer = KFACOptimizer(actor_critic)
         else:
+
+            self.beta_actor_list = []
+            self.param_list = []
+            for name, param in actor_critic.named_parameters():
+                if "base.beta_net_actor" in name :
+                    self.beta_actor_list.append(param)
+                else:
+                    self.param_list.append(param)
+
             self.optimizer = optim.RMSprop(
-                actor_critic.parameters(), lr, eps=eps, alpha=alpha)
+                [{'params': self.param_list},
+                 {'params': self.beta_actor_list, 'lr': 1e-4}], lr, eps=eps, alpha=alpha)
+
+
 
     def update(self, rollouts):
         obs_shape = rollouts.obs.size()[2:]
@@ -36,12 +48,12 @@ class A2C_ACKTR():
         num_steps, num_processes, _ = rollouts.rewards.size()
 
         values, action_log_probs, dist_entropy, _ = self.actor_critic.evaluate_actions(
-            rollouts.obs[:-1].view(-1, *obs_shape),
-            rollouts.recurrent_hidden_states[0].view(-1, self.actor_critic.recurrent_hidden_state_size),
-            rollouts.masks[:-1].view(-1, 1),
-            rollouts.actions.view(-1, action_shape))
+            rollouts.obs[:-1],
+            rollouts.recurrent_hidden_states[0],
+            rollouts.masks[:-1],
+            rollouts.actions)
 
-        values = values.view(num_steps, num_processes, 1)
+        #values = values.view(num_steps, num_processes, 1)
         action_log_probs = action_log_probs.view(num_steps, num_processes, 1)
 
         advantages = rollouts.returns[:-1] - values
