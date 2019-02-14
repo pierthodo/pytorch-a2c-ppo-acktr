@@ -11,6 +11,7 @@ class A2C_ACKTR():
                  value_loss_coef,
                  entropy_coef,
                  lr=None,
+                 lr_beta=None,
                  eps=None,
                  alpha=None,
                  max_grad_norm=None,
@@ -38,7 +39,7 @@ class A2C_ACKTR():
 
             self.optimizer = optim.RMSprop(
                 [{'params': self.param_list},
-                 {'params': self.beta_actor_list, 'lr': lr}], lr, eps=eps, alpha=alpha)
+                 {'params': self.beta_actor_list, 'lr': lr_beta}], lr, eps=eps, alpha=alpha)
 
 
 

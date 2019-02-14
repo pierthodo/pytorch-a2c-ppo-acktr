@@ -68,6 +68,7 @@ def get_args():
     parser.add_argument('--vis', action='store_true', default=False,
                         help='enable visdom visualization')
     parser.add_argument('--est-beta-actor',type=int,default=0)
+    parser.add_argument('--lr-beta',type=float,default=7e-4)
     parser.add_argument('--disable-log', action='store_true', default=False)
 
     parser.add_argument('--port', type=int, default=8097,
