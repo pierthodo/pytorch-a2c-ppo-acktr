@@ -38,7 +38,7 @@ class A2C_ACKTR():
 
             self.optimizer = optim.RMSprop(
                 [{'params': self.param_list},
-                 {'params': self.beta_actor_list, 'lr': 1e-4}], lr, eps=eps, alpha=alpha)
+                 {'params': self.beta_actor_list, 'lr': lr}], lr, eps=eps, alpha=alpha)
 
 
 

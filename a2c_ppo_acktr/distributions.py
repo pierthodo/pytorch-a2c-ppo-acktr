@@ -60,8 +60,11 @@ class Categorical(nn.Module):
 
         self.linear = init_(nn.Linear(num_inputs, num_outputs))
 
-    def forward(self, x):
+    def forward(self, x,prev_x=None,beta_actor = 1):
         x = self.linear(x)
+        if prev_x is not None:
+            x = beta_actor * x + (1-beta_actor)*prev_x
+
         return FixedCategorical(logits=x)
 
 

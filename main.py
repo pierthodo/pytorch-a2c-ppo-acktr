@@ -105,7 +105,7 @@ def main():
     start = time.time()
     prev_action_mean = None
     for j in range(num_updates):
-
+        beta_actor_list = []
         if args.use_linear_lr_decay:
             # decrease learning rate linearly
             if args.algo == "acktr":
@@ -120,14 +120,14 @@ def main():
         for step in range(args.num_steps):
             # Sample actions
             with torch.no_grad():
-                value, action, action_log_prob, recurrent_hidden_states,prev_action_mean = actor_critic.act(
+                value, action, action_log_prob, recurrent_hidden_states,prev_action_mean,beta_actor = actor_critic.act(
                         rollouts.obs[step],
                         rollouts.recurrent_hidden_states[step],
                         rollouts.masks[step],prev_action_mean)
 
             # Obser reward and next obs
             obs, reward, done, infos = envs.step(action)
-
+            beta_actor_list.append(beta_actor.numpy())
             for info in infos:
                 if 'episode' in info.keys():
                     episode_rewards.append(info['episode']['r'])
@@ -179,8 +179,9 @@ def main():
                        np.min(episode_rewards),
                        np.max(episode_rewards), dist_entropy,
                        value_loss, action_loss))
-        experiment.log_multiple_metrics({"mean reward": np.mean(episode_rewards),
-                                         "Value loss": value_loss, "Action Loss": action_loss,
+        experiment.log_metrics({"mean reward": np.mean(episode_rewards),
+                                         "Value loss": value_loss, "Action Loss": action_loss,"Beta mean": np.array(beta_actor_list).mean(),
+                                         "Beta std": np.array(beta_actor_list).std(),
                                          },
 
                                         step=j * args.num_steps * args.num_processes)

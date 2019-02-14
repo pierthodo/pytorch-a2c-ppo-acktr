@@ -64,7 +64,7 @@ class Policy(nn.Module):
         action_log_probs = dist.log_probs(action)
         dist_entropy = dist.entropy().mean()
 
-        return value, action, action_log_probs, rnn_hxs, action_mean
+        return value, action, action_log_probs, rnn_hxs, action_mean,beta_actor
 
     def get_value(self, inputs, rnn_hxs, masks):
         value, _, _, _ = self.base(inputs, rnn_hxs, masks)
@@ -221,7 +221,7 @@ class CNNBase(NNBase):
 
 
 class MLPBase(NNBase):
-    def __init__(self, num_inputs, recurrent=False, hidden_size=64,init_bias = 3,est_beta_actor=True):
+    def __init__(self, num_inputs, recurrent=False, hidden_size=64,init_bias = 0,est_beta_actor=True):
         super(MLPBase, self).__init__(recurrent, num_inputs, hidden_size)
         self.est_beta_actor = est_beta_actor
         if recurrent:
