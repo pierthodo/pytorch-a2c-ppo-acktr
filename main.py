@@ -35,6 +35,7 @@ assert args.algo == "a2c" , "Algo not implemented"
 experiment = Experiment(api_key="HFFoR5WtTjoHuBGq6lYaZhG0c",
                         project_name="pg-reg", workspace="pierthodo",disabled=args.disable_log,)
 
+experiment.log_metrics(vars(args))
 
 num_updates = int(args.num_env_steps) // args.num_steps // args.num_processes
 
