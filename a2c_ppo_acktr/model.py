@@ -70,25 +70,25 @@ class Policy(nn.Module):
         value, _, _, _ = self.base(inputs, rnn_hxs, masks)
         return value
 
-    def evaluate_actions(self, inputs, rnn_hxs, masks, action): #TODO fix masks overlapp between threads
+    def evaluate_actions(self, inputs, rnn_hxs, masks, action,eval_prev_mean): #TODO fix masks overlapp between threads
         value_list = []
         action_log_probs = []
         dist_entropy = []
-        prev_action_mean = None
+
 
         for i in range(inputs.size()[0]):
             value, actor_features, _, betas_actor = self.base(inputs[i,:,:], rnn_hxs, masks[i,:,:])
             value_list.append(value)
 
-            dist= self.dist(actor_features, prev_action_mean, betas_actor)
-            prev_action_mean = dist.loc
+            dist= self.dist(actor_features, eval_prev_mean, betas_actor)
+            eval_prev_mean = dist.loc
             action_log_probs.append(dist.log_probs(action[i,:,:]))
             dist_entropy.append(dist.entropy())
 
         action_log_probs = torch.stack(action_log_probs)
         dist_entropy = torch.stack(dist_entropy).mean()
         v = torch.stack(value_list)
-        return torch.stack(value_list), action_log_probs, dist_entropy, rnn_hxs
+        return torch.stack(value_list), action_log_probs, dist_entropy, rnn_hxs,eval_prev_mean
 
 
 class NNBase(nn.Module):
