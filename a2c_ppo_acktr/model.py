@@ -221,7 +221,7 @@ class CNNBase(NNBase):
 
 
 class MLPBase(NNBase):
-    def __init__(self, num_inputs, recurrent=False, hidden_size=64,init_bias = 0,est_beta_actor=True):
+    def __init__(self, num_inputs, recurrent=False, hidden_size=64,init_bias = 3,est_beta_actor=True):
         super(MLPBase, self).__init__(recurrent, num_inputs, hidden_size)
         self.est_beta_actor = est_beta_actor
         if recurrent:
