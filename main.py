@@ -105,7 +105,7 @@ def main():
 
     start = time.time()
     prev_action_mean = None
-    eval_prev_mean = None
+    eval_prev_mean = [None]
     for j in range(num_updates):
         beta_actor_list = []
         if args.use_linear_lr_decay:
