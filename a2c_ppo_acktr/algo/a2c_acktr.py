@@ -19,6 +19,7 @@ class A2C_ACKTR():
 
         self.actor_critic = actor_critic
         self.acktr = acktr
+        self.eval_prev_mean = [None]
 
         self.value_loss_coef = value_loss_coef
         self.entropy_coef = entropy_coef
@@ -43,7 +44,7 @@ class A2C_ACKTR():
 
 
 
-    def update(self, rollouts,eval_prev_mean):
+    def update(self, rollouts):
         obs_shape = rollouts.obs.size()[2:]
         action_shape = rollouts.actions.size()[-1]
         num_steps, num_processes, _ = rollouts.rewards.size()
@@ -52,8 +53,8 @@ class A2C_ACKTR():
             rollouts.obs[:-1],
             rollouts.recurrent_hidden_states[0],
             rollouts.masks[:-1],
-            rollouts.actions,eval_prev_mean[-1])
-        eval_prev_mean.append(tmp)
+            rollouts.actions,self.eval_prev_mean[-1])
+        self.eval_prev_mean.append(tmp)
         #values = values.view(num_steps, num_processes, 1)
         action_log_probs = action_log_probs.view(num_steps, num_processes, 1)
 
@@ -89,4 +90,4 @@ class A2C_ACKTR():
 
         self.optimizer.step()
 
-        return value_loss.item(), action_loss.item(), dist_entropy.item(), eval_prev_mean
+        return value_loss.item(), action_loss.item(), dist_entropy.item()

@@ -105,7 +105,6 @@ def main():
 
     start = time.time()
     prev_action_mean = None
-    eval_prev_mean = [None]
     for j in range(num_updates):
         beta_actor_list = []
         if args.use_linear_lr_decay:
@@ -146,7 +145,7 @@ def main():
 
         rollouts.compute_returns(next_value, args.use_gae, args.gamma, args.tau)
 
-        value_loss, action_loss, dist_entropy,eval_prev_mean = agent.update(rollouts,eval_prev_mean)
+        value_loss, action_loss, dist_entropy = agent.update(rollouts)
 
         rollouts.after_update()
 
