@@ -78,6 +78,7 @@ def get_args():
     parser.add_argument("--est-value", type=str2bool, nargs='?',
                         const=False, default="False",
                         help='estimate the beta for the value function')
+    parser.add_argument('--gravity', type=float, default=-9.81)
     parser.add_argument('--init-bias',type=float, default=0,
                     help='Optimistic initalization for the beta value')
     parser.add_argument('--N-backprop',type=int,default=1,

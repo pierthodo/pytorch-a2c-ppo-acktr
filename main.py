@@ -288,6 +288,7 @@ def main():
             eval_envs = make_vec_envs(
                 args.env_name, args.seed + args.num_processes, args.num_processes,
                 args.gamma, eval_log_dir, args.add_timestep, device, True)
+            eval_envs.venv.venv.envs[0].env.model.opt.gravity[-1] = args.gravity
 
             vec_norm = get_vec_normalize(eval_envs)
             if vec_norm is not None:
