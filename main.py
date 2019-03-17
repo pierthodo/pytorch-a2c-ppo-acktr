@@ -193,7 +193,7 @@ def main():
 
 
             prev_value_np = np.array(rollouts.prev_value.data)
-            experiment.log_multiple_metrics({"mean reward": np.mean(episode_rewards),
+            experiment.log_metrics({"mean reward": np.mean(episode_rewards),
                                              "Value loss": value_loss, "Action Loss": action_loss,
                                              "beta_v mean": np.array(rollouts.beta_v.data).mean(),
                                              "beta_v std": np.array(rollouts.beta_v.data).std(),
@@ -339,7 +339,7 @@ def main():
                 print(" Evaluation using {} episodes: mean reward {:.5f}\n".
                     format(len(eval_episode_rewards),
                            np.mean(eval_episode_rewards)))
-                experiment.log_multiple_metrics({"Gravity: "+str(grav)+"Eval mean reward":np.mean(eval_episode_rewards)},
+                experiment.log_metrics({"Gravity: "+str(grav)+"Eval mean reward":np.mean(eval_episode_rewards)},
                                                 step=j * args.num_steps * args.num_processes)
         if args.vis and j % args.vis_interval == 0:
             try:
