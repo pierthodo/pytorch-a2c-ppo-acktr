@@ -124,8 +124,8 @@ def main():
             for info in infos:
                 if 'episode' in info.keys():
                     episode_rewards.append(info['episode']['r'])
-            #tmp = 1np.random.normal(reward.data[0][0],scale = np.abs(reward.data[0][0])*args.noise_reward)
-            tmp =1
+            tmp = np.random.normal(reward.data[0][0],scale = 0)
+            #tmp =1
             reward = torch.ones_like(reward) * tmp
             # If done then clean the history of observations.
             masks = torch.FloatTensor([[0.0] if done_ else [1.0]
