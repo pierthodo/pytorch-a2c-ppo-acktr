@@ -103,7 +103,7 @@ class PPO():
                 if self.delib_coef > 0:
                     target_beta = torch.zeros_like(betas).fill_(self.delib_center)
                     delib_loss = F.mse_loss(betas, target_beta)
-                    delib_loss = delib_loss * value_loss
+                    #delib_loss = delib_loss * value_loss
                 else:
                     delib_loss = torch.zeros_like(value_loss)
 

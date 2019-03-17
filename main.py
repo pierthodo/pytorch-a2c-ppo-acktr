@@ -37,7 +37,7 @@ if args.lr_bias == -1:
 if args.est_value == "False":
     args.N_backprop = 1
 num_updates = int(args.num_frames) // args.num_steps // args.num_processes
-
+gravity_list = [-1,-2,-3,-4,-5,-6,-7,-8,-9.81]
 experiment = Experiment(api_key="HFFoR5WtTjoHuBGq6lYaZhG0c",
                         project_name="estimate-value", workspace="pierthodo",disabled=args.disable_log,
                         log_code=False,auto_output_logging=None,  \
@@ -285,60 +285,61 @@ def main():
         if (args.eval_interval is not None
                 and len(episode_rewards) > 1
                 and j % args.eval_interval == 0):
-            eval_envs = make_vec_envs(
-                args.env_name, args.seed + args.num_processes, args.num_processes,
-                args.gamma, eval_log_dir, args.add_timestep, device, True)
-            eval_envs.venv.venv.envs[0].env.model.opt.gravity[-1] = args.gravity
+            for grav in gravity_list:
+                eval_envs = make_vec_envs(
+                    args.env_name, args.seed + args.num_processes, args.num_processes,
+                    args.gamma, eval_log_dir, args.add_timestep, device, True)
+                eval_envs.venv.venv.envs[0].env.env.model.opt.gravity[-1] = grav
 
-            vec_norm = get_vec_normalize(eval_envs)
-            if vec_norm is not None:
-                vec_norm.eval()
-                vec_norm.ob_rms = get_vec_normalize(envs).ob_rms
+                vec_norm = get_vec_normalize(eval_envs)
+                if vec_norm is not None:
+                    vec_norm.eval()
+                    vec_norm.ob_rms = get_vec_normalize(envs).ob_rms
 
-            eval_episode_rewards = []
-            prev_value = torch.zeros((rollouts.masks.size()[1], 1))
-            prev_value = prev_value.to(device)
+                eval_episode_rewards = []
+                prev_value = torch.zeros((rollouts.masks.size()[1], 1))
+                prev_value = prev_value.to(device)
 
-            obs = eval_envs.reset()
-            eval_recurrent_hidden_states = torch.zeros(args.num_processes,
-                            actor_critic.recurrent_hidden_state_size, device=device)
-            eval_masks = torch.zeros(args.num_processes, 1, device=device)
+                obs = eval_envs.reset()
+                eval_recurrent_hidden_states = torch.zeros(args.num_processes,
+                                actor_critic.recurrent_hidden_state_size, device=device)
+                eval_masks = torch.zeros(args.num_processes, 1, device=device)
 
-            while len(eval_episode_rewards) < 10:
-                with torch.no_grad():
-                    _, action, _, eval_recurrent_hidden_states, _, _ = actor_critic.act(
-                        obs,
-                        eval_recurrent_hidden_states,
-                        eval_masks, prev_value,deterministic=True)
-                    #_, action, _, eval_recurrent_hidden_states = actor_critic.act(
-                    #    obs, eval_recurrent_hidden_states, eval_masks, deterministic=True)
+                while len(eval_episode_rewards) < 10:
+                    with torch.no_grad():
+                        _, action, _, eval_recurrent_hidden_states, _, _ = actor_critic.act(
+                            obs,
+                            eval_recurrent_hidden_states,
+                            eval_masks, prev_value,deterministic=True)
+                        #_, action, _, eval_recurrent_hidden_states = actor_critic.act(
+                        #    obs, eval_recurrent_hidden_states, eval_masks, deterministic=True)
 
-                # Obser reward and next obs
-                obs, reward, done, infos = eval_envs.step(action)
+                    # Obser reward and next obs
+                    obs, reward, done, infos = eval_envs.step(action)
 
-                eval_masks = torch.FloatTensor([[0.0] if done_ else [1.0]
-                                                for done_ in done])
-                for info in infos:
-                    if 'episode' in info.keys():
-                        eval_episode_rewards.append(info['episode']['r'])
-                        eval_envs = make_vec_envs(
-                            args.env_name, args.seed + args.num_processes + len(eval_episode_rewards)
-                            , args.num_processes,
-                            args.gamma, eval_log_dir, args.add_timestep, device, True)
+                    eval_masks = torch.FloatTensor([[0.0] if done_ else [1.0]
+                                                    for done_ in done])
+                    for info in infos:
+                        if 'episode' in info.keys():
+                            eval_episode_rewards.append(info['episode']['r'])
+                            eval_envs = make_vec_envs(
+                                args.env_name, args.seed + args.num_processes + len(eval_episode_rewards)
+                                , args.num_processes,
+                                args.gamma, eval_log_dir, args.add_timestep, device, True)
 
-                        vec_norm = get_vec_normalize(eval_envs)
-                        if vec_norm is not None:
-                            vec_norm.eval()
-                            vec_norm.ob_rms = get_vec_normalize(envs).ob_rms
-                        obs = eval_envs.reset()
+                            vec_norm = get_vec_normalize(eval_envs)
+                            if vec_norm is not None:
+                                vec_norm.eval()
+                                vec_norm.ob_rms = get_vec_normalize(envs).ob_rms
+                            obs = eval_envs.reset()
 
-            eval_envs.close()
+                eval_envs.close()
 
-            print(" Evaluation using {} episodes: mean reward {:.5f}\n".
-                format(len(eval_episode_rewards),
-                       np.mean(eval_episode_rewards)))
-            experiment.log_multiple_metrics({"Generalization Error":np.mean(episode_rewards)-np.mean(eval_episode_rewards)},
-                                            step=j * args.num_steps * args.num_processes)
+                print(" Evaluation using {} episodes: mean reward {:.5f}\n".
+                    format(len(eval_episode_rewards),
+                           np.mean(eval_episode_rewards)))
+                experiment.log_multiple_metrics({"Gravity: "+str(grav)+"Eval mean reward":np.mean(eval_episode_rewards)},
+                                                step=j * args.num_steps * args.num_processes)
         if args.vis and j % args.vis_interval == 0:
             try:
                 # Sometimes monitor doesn't properly flush the outputs
