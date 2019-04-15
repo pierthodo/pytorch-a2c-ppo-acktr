@@ -38,7 +38,7 @@ if args.lr_bias == -1:
 if args.est_value == "False":
     args.N_backprop = 1
 num_updates = int(args.num_frames) // args.num_steps // args.num_processes
-gravity_list = [-1,-2,-3,-4,-5,-6,-7,-8,-9.81]
+gravity_list = [-9.81]
 if args.comet_offline:
     experiment = OfflineExperiment(
                             project_name="estimate-value", workspace="pierthodo",disabled=args.disable_log,
