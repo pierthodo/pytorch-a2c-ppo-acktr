@@ -21,6 +21,7 @@ parser.add_argument('--add-timestep', action='store_true', default=False,
                     help='add timestep to observations')
 parser.add_argument('--non-det', action='store_true', default=False,
                     help='whether to use a non-deterministic policy')
+parser.add_argument('--gravity',type=float,default = -9.81)
 args = parser.parse_args()
 
 args.det = not args.non_det
@@ -28,6 +29,7 @@ args.det = not args.non_det
 env = make_vec_envs(args.env_name, args.seed + 1000, 1,
                             None, None, args.add_timestep, device='cpu',
                             allow_early_resets=False)
+env.venv.venv.envs[0].env.model.opt.gravity[-1] = args.gravity
 
 # Get a render function
 render_func = get_render_func(env)
@@ -59,6 +61,7 @@ if args.env_name.find('Bullet') > -1:
 beta_list = []
 while True:
     #time.sleep(0.1)
+    #### TODO: TRY GRAVITY env.env.model.opt.gravity
     with torch.no_grad():
         #value, action, _, recurrent_hidden_states = actor_critic.act(
         #    obs, recurrent_hidden_states, masks, deterministic=args.det)

@@ -121,6 +121,8 @@ def main():
                         rollouts.masks[step],prev_value)
             # Obser reward and next obs
             obs, reward, done, infos = envs.step(action)
+            tmp = np.random.normal(obs.data[0][0], scale=args.noise_obs)
+            obs = torch.ones_like(obs) * tmp
             for info in infos:
                 if 'episode' in info.keys():
                     episode_rewards.append(info['episode']['r'])

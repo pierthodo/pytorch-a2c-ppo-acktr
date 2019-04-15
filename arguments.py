@@ -90,7 +90,7 @@ def get_args():
             help='lambda in the lambda * || beta - c || ^ 2 loss')
     parser.add_argument('--beta-target', type=str2bool, nargs='?',
                         const=False, default="False",help="Use beta for the target")
-    parser.add_argument('--noise-reward',type=float, default=0,
+    parser.add_argument('--noise-obs',type=float, default=0,
                     help='Noisy reward')
     parser.add_argument('--scatter',default=0,type=float, help='if > 0, value will determine max amt of episodes plotted')
     parser.add_argument('--beta-lambda',default=0,type=int,help="Use beta on the lambda target")
