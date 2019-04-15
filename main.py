@@ -1,4 +1,5 @@
 from comet_ml import Experiment
+from comet_ml import OfflineExperiment
 import copy
 import glob
 import os
@@ -38,12 +39,19 @@ if args.est_value == "False":
     args.N_backprop = 1
 num_updates = int(args.num_frames) // args.num_steps // args.num_processes
 gravity_list = [-1,-2,-3,-4,-5,-6,-7,-8,-9.81]
-experiment = Experiment(api_key="HFFoR5WtTjoHuBGq6lYaZhG0c",
-                        project_name="estimate-value", workspace="pierthodo",disabled=args.disable_log,
-                        log_code=False,auto_output_logging=None,  \
-                        log_graph=False, auto_param_logging=False,parse_args=True, \
-                        log_git_metadata=False, \
-                        log_git_patch=False)
+if args.comet_offline:
+    experiment = OfflineExperiment(
+                            project_name="estimate-value", workspace="pierthodo",disabled=args.disable_log,
+                            log_code=False,auto_output_logging=None,  \
+                            log_graph=False, auto_param_logging=False,parse_args=True, \
+                            log_git_metadata=False,offline_directory="./tmp")
+else:
+    experiment = Experiment(api_key="HFFoR5WtTjoHuBGq6lYaZhG0c",
+                            project_name="estimate-value", workspace="pierthodo",disabled=args.disable_log,
+                            log_code=False,auto_output_logging=None,  \
+                            log_graph=False, auto_param_logging=False,parse_args=True, \
+                            log_git_metadata=False, \
+                            log_git_patch=False)
 experiment.log_parameters(vars(args))
 torch.manual_seed(args.seed)
 if args.cuda:

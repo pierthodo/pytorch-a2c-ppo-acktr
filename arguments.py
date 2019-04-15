@@ -96,6 +96,7 @@ def get_args():
     parser.add_argument('--beta-lambda',default=0,type=int,help="Use beta on the lambda target")
     parser.add_argument('--lr-bias',type=float,default=-1)
     parser.add_argument('--beta-fixed',type=float,default=1)
+    parser.add_argument('--comet-offline',type=int,default=1)
 
     args = parser.parse_args()
 
