@@ -44,7 +44,7 @@ experiment = Experiment(api_key="HFFoR5WtTjoHuBGq6lYaZhG0c",
                         log_graph=False, auto_param_logging=False,parse_args=True, \
                         log_git_metadata=False, \
                         log_git_patch=False)
-experiment.log_multiple_params(vars(args))
+experiment.log_parameters(vars(args))
 torch.manual_seed(args.seed)
 if args.cuda:
     torch.cuda.manual_seed(args.seed)
