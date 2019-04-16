@@ -83,8 +83,7 @@ def main():
         viz = Visdom(port=args.port)
         win = None
 
-    envs = make_vec_envs(args.env_name, args.seed, args.num_processes,
-                        args.gamma, args.log_dir, args.add_timestep, device, False)
+    envs = make_vec_envs(args.env_name, args.seed, args.num_processes, args.gamma, args.log_dir, args.add_timestep, device, False)
 
     actor_critic = Policy(envs.observation_space.shape, envs.action_space,args.num_processes,args.num_steps,args.N_backprop,
         base_kwargs={'recurrent': args.recurrent_policy,'est_value':args.est_value,'init_bias':args.init_bias,'beta_fixed':args.beta_fixed})
@@ -129,7 +128,7 @@ def main():
                         rollouts.masks[step],prev_value)
             # Obser reward and next obs
             obs, reward, done, infos = envs.step(action)
-            tmp = np.random.normal(obs.data[0][0], scale=args.noise_obs)
+            tmp = np.random.normal(obs.numpy(), scale=args.noise_obs)
             obs = torch.ones_like(obs) * tmp
             for info in infos:
                 if 'episode' in info.keys():
