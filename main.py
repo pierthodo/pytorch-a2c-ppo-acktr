@@ -129,7 +129,7 @@ def main():
             # Obser reward and next obs
             obs, reward, done, infos = envs.step(action)
             tmp = np.random.normal(obs.numpy(), scale=args.noise_obs)
-            obs = torch.ones_like(obs) * tmp
+            obs = torch.from_numpy(tmp)
             for info in infos:
                 if 'episode' in info.keys():
                     episode_rewards.append(info['episode']['r'])
