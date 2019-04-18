@@ -97,7 +97,8 @@ def get_args():
     parser.add_argument('--lr-bias',type=float,default=-1)
     parser.add_argument('--beta-fixed',type=float,default=1)
     parser.add_argument('--comet-offline',type=int,default=1)
-
+    parser.add_argument('--offline-directory',type=str,default="./tmp")
+    parser.add_argument('--tag-comet',type=str,default="")
     args = parser.parse_args()
 
     args.cuda = not args.no_cuda and torch.cuda.is_available()

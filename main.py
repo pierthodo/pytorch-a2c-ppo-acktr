@@ -44,7 +44,7 @@ if args.comet_offline:
                             project_name="estimate-value", workspace="pierthodo",disabled=args.disable_log,
                             log_code=False,auto_output_logging=None,  \
                             log_graph=False, auto_param_logging=False,parse_args=True, \
-                            log_git_metadata=False,offline_directory="./tmp")
+                            log_git_metadata=False,offline_directory=args.offline_directory)
 else:
     experiment = Experiment(api_key="HFFoR5WtTjoHuBGq6lYaZhG0c",
                             project_name="estimate-value", workspace="pierthodo",disabled=args.disable_log,
@@ -53,6 +53,9 @@ else:
                             log_git_metadata=False, \
                             log_git_patch=False)
 experiment.log_parameters(vars(args))
+if args.tag_comet != "":
+    experiment.add_tag(args.tag_comet)
+
 torch.manual_seed(args.seed)
 if args.cuda:
     torch.cuda.manual_seed(args.seed)
