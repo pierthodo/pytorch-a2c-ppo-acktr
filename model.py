@@ -216,10 +216,11 @@ class CNNBase(NNBase):
 
 
 class MLPBase(NNBase):
-    def __init__(self, num_inputs, recurrent=False, hidden_size=64,est_value=False,init_bias=0,beta_fixed=1):
+    def __init__(self, num_inputs, recurrent=False, hidden_size=64,est_value=False,init_bias=0,beta_fixed=1,share_beta=0):
         super(MLPBase, self).__init__(recurrent, num_inputs, hidden_size)
         self.est_value = est_value
         self.init_bias = init_bias
+        self.share_beta = share_beta
         self.beta_fixed = beta_fixed
         if recurrent:
             num_inputs = hidden_size
@@ -279,7 +280,11 @@ class MLPBase(NNBase):
         hidden_actor = self.actor(x)
 
         if self.est_value:
-            hidden_value_beta = self.beta_net_value(x)
+            if self.share_beta:
+                hidden_value_beta = hidden_critic
+            else:
+                hidden_value_beta = self.beta_net_value(x)
+
             beta_value = self.beta_net_value_linear(hidden_value_beta)
         else:
             beta_value = torch.ones_like(masks)*self.beta_fixed

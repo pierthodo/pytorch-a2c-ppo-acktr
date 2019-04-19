@@ -66,7 +66,7 @@ def get_args():
                         help='disables CUDA training')
     parser.add_argument('--add-timestep', action='store_true', default=False,
                         help='add timestep to observations')
-    parser.add_argument('--recurrent-policy', action='store_true', default=False,
+    parser.add_argument('--recurrent-policy',type=int, default=0,
                         help='use a recurrent policy')
     parser.add_argument('--vis', action='store_true', default=False,
                         help='enable visdom visualization')
@@ -100,6 +100,7 @@ def get_args():
     parser.add_argument('--offline-directory',type=str,default="./tmp")
     parser.add_argument('--tag-comet',type=str,default="")
     parser.add_argument('--sub-reward',type=int,default=1)
+    parser.add_argument('--share-beta',type=int,default=0)
     args = parser.parse_args()
 
     args.cuda = not args.no_cuda and torch.cuda.is_available()
