@@ -99,6 +99,7 @@ def get_args():
     parser.add_argument('--comet-offline',type=int,default=1)
     parser.add_argument('--offline-directory',type=str,default="./tmp")
     parser.add_argument('--tag-comet',type=str,default="")
+    parser.add_argument('--sub-reward',type=int,default=1)
     args = parser.parse_args()
 
     args.cuda = not args.no_cuda and torch.cuda.is_available()

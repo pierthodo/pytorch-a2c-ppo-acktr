@@ -148,7 +148,10 @@ def main():
                 rollouts.insert(obs, recurrent_hidden_states, action, action_log_prob, value, reward, masks,beta_v,prev_value)
 
             reward = reward.to(device)
-            prev_value = new_prev_value - reward
+            if args.sub_reward:
+                prev_value = new_prev_value - reward
+            else:
+                prev_value = new_prev_value
 
         with torch.no_grad():
             next_value = actor_critic.get_value(rollouts.obs[-1],
