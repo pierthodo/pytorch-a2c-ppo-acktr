@@ -374,7 +374,7 @@ def main():
                                   args.algo, args.num_frames)
             except IOError:
                 pass
-    pickle.dump(result,open(args.offline_directory+"/data.pkl",'w'))
+    pickle.dump(result,open(args.offline_directory+"/data.pkl",'wb'))
 
 if __name__ == "__main__":
     main()
