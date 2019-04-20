@@ -5,7 +5,7 @@ import glob
 import os
 import time
 from collections import deque
-
+import pickle
 import gym
 import numpy as np
 import torch
@@ -13,8 +13,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from scipy.stats import variation
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
+#import matplotlib.pyplot as plt
+#import matplotlib.cm as cm
 import algo
 from arguments import get_args
 from envs import make_vec_envs
@@ -39,6 +39,7 @@ if args.est_value == "False":
     args.N_backprop = 1
 num_updates = int(args.num_frames) // args.num_steps // args.num_processes
 gravity_list = [-9.81]
+result = []
 if args.comet_offline:
     experiment = OfflineExperiment(
                             project_name="estimate-value", workspace="pierthodo",disabled=args.disable_log,
@@ -53,6 +54,7 @@ else:
                             log_git_metadata=False, \
                             log_git_patch=False)
 experiment.log_parameters(vars(args))
+result.append(vars(args))
 if args.tag_comet != "":
     experiment.add_tag(args.tag_comet)
 
@@ -88,7 +90,7 @@ def main():
 
     envs = make_vec_envs(args.env_name, args.seed, args.num_processes, args.gamma, args.log_dir, args.add_timestep, device, False)
 
-    actor_critic = Policy(envs.observation_space.shape, envs.action_space,args.num_processes,args.num_steps,args.N_backprop,
+    actor_critic = Policy(envs.observation_space.shape, envs.action_space,args.num_processes,args.num_steps,args.N_backprop,args.sub_reward,
         base_kwargs={'recurrent': args.recurrent_policy,'est_value':args.est_value,'init_bias':args.init_bias,'beta_fixed':args.beta_fixed,"share_beta":args.share_beta})
     actor_critic.to(device)
 
@@ -110,7 +112,7 @@ def main():
 
     rollouts = RolloutStorage(args.num_steps, args.num_processes,
                         envs.observation_space.shape, envs.action_space,
-                        actor_critic.recurrent_hidden_state_size)
+                        actor_critic.recurrent_hidden_state_size,args.sub_reward)
 
     obs = envs.reset()
     rollouts.obs[0].copy_(obs)
@@ -120,6 +122,7 @@ def main():
     done = True
     episode_rewards = deque(maxlen=10)
     cum_reward = 0
+    rollouts.masks[0] = 0
     start = time.time()
     for j in range(num_updates):
         for step in range(args.num_steps):
@@ -143,9 +146,9 @@ def main():
             masks = torch.FloatTensor([[0.0] if done_ else [1.0]
                                        for done_ in done])
             if args.beta_target:
-                rollouts.insert(obs, recurrent_hidden_states, action, action_log_prob, new_prev_value, reward, masks,beta_v,prev_value)
+                rollouts.insert(obs, recurrent_hidden_states, action, action_log_prob, new_prev_value, reward, masks,beta_v,new_prev_value)
             else:
-                rollouts.insert(obs, recurrent_hidden_states, action, action_log_prob, value, reward, masks,beta_v,prev_value)
+                rollouts.insert(obs, recurrent_hidden_states, action, action_log_prob, value, reward, masks,beta_v,new_prev_value)
 
             reward = reward.to(device)
             if args.sub_reward:
@@ -192,7 +195,7 @@ def main():
                        np.min(episode_rewards),
                        np.max(episode_rewards), dist_entropy,
                        value_loss, action_loss))
-            prev_numpy = np.array(rollouts.prev_value.data.squeeze())
+            prev_numpy = np.array(rollouts.prev_value[1:].data.squeeze())
             return_numpy = np.array(rollouts.returns.data.squeeze())
             value_numpy =  np.array(rollouts.value_preds.data.squeeze())
             #beta_loss_s= beta_loss_series(np.array(rollouts.prev_value.view(-1,1)[:-1,:].data),
@@ -218,6 +221,14 @@ def main():
                                              },
 
                                             step=j * args.num_steps * args.num_processes)
+            result.append({"step":j * args.num_steps * args.num_processes,"mean reward": np.mean(episode_rewards),
+                                             "Value loss": value_loss, "Action Loss": action_loss,
+                                             "beta_v mean": np.array(rollouts.beta_v.data).mean(),
+                                             "beta_v std": np.array(rollouts.beta_v.data).std(),
+                                             "value mean": prev_value_np.mean(),"value std":prev_value_np.std(),
+                                             "variation value":np.abs(variation(prev_value_np)[0][0]),"variance step value": np.abs(prev_value_np[1:]-prev_value_np[:-1]).mean(),
+                                             "Error target - v":loss_v,"Error target - v_tilde":loss_v_tilde
+                                             })
             if args.scatter:
                 reward = np.array(rollouts.rewards.data)
                 # find end of episodes
@@ -249,11 +260,11 @@ def main():
                     # we also want to plot the value using a fixed beta
                     beta_mean = beta_v.mean()
                     value_mean = []
-                    prev_value = value[0]
+                    prev_value_scat = value[0]
                     for ind in range(len(value) - 1):
                         v = value[ind + 1]
-                        value_mean_t = beta_mean  * v + (1 - beta_mean) * prev_value
-                        prev_value   = value_mean_t - rew_v[ind + 1]
+                        value_mean_t = beta_mean  * v + (1 - beta_mean) * prev_value_scat
+                        prev_value_scat   = value_mean_t - rew_v[ind + 1]
                         value_mean  += [value_mean_t]
 
                     value_mean = torch.stack(value_mean)
@@ -313,8 +324,8 @@ def main():
                     vec_norm.ob_rms = get_vec_normalize(envs).ob_rms
 
                 eval_episode_rewards = []
-                prev_value = torch.zeros((rollouts.masks.size()[1], 1))
-                prev_value = prev_value.to(device)
+                prev_value_eval = torch.zeros((rollouts.masks.size()[1], 1))
+                prev_value_eval = prev_value_eval.to(device)
 
                 obs = eval_envs.reset()
                 eval_recurrent_hidden_states = torch.zeros(args.num_processes,
@@ -326,7 +337,7 @@ def main():
                         _, action, _, eval_recurrent_hidden_states, _, _ = actor_critic.act(
                             obs,
                             eval_recurrent_hidden_states,
-                            eval_masks, prev_value,deterministic=True)
+                            eval_masks, prev_value_eval,deterministic=True)
                         #_, action, _, eval_recurrent_hidden_states = actor_critic.act(
                         #    obs, eval_recurrent_hidden_states, eval_masks, deterministic=True)
 
@@ -363,7 +374,7 @@ def main():
                                   args.algo, args.num_frames)
             except IOError:
                 pass
-
+    pickle.dump(result,open(args.offline_directory,'w'))
 
 if __name__ == "__main__":
     main()

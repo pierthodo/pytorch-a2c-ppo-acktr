@@ -12,13 +12,14 @@ class Flatten(nn.Module):
 
 
 class Policy(nn.Module):
-    def __init__(self, obs_shape, action_space,num_processes,num_steps,N_backprop, base_kwargs=None):
+    def __init__(self, obs_shape, action_space,num_processes,num_steps,N_backprop,sub_reward, base_kwargs=None):
         super(Policy, self).__init__()
         if base_kwargs is None:
             base_kwargs = {}
         self.num_processes = num_processes
         self.num_steps = num_steps
         self.N_backprop = N_backprop
+        self.sub_reward = sub_reward
         if len(obs_shape) == 3:
             self.base = CNNBase(obs_shape[0], **base_kwargs)
         elif len(obs_shape) == 1:
@@ -74,33 +75,54 @@ class Policy(nn.Module):
             lim = del_index[int(b/(self.num_steps))]
             tmp = []
             for i in reversed(range(self.N_backprop)):
-                if not b-i < lim: # if the index used goes on another process memory than block it
+                if not b-i < 0: # if the index used goes on another process memory than block it
                     tmp.append(b-i)
             index_ext.append(tmp)
         return index_ext
 
     def evaluate_actions(self, inputs, rnn_hxs, masks, action,indices,rewards,prev_value_list):
         #l = range(len(indices_ext))[self.N_backprop - 1::self.N_backprop] ## List of index for the original list
-        _, actor_features, _,_ = self.base(inputs[indices], rnn_hxs[indices], masks[indices])
-        dist = self.dist(actor_features)
-        action_log_probs = dist.log_probs(action[indices])
-        dist_entropy = dist.entropy().mean()
 
-        indices_ext = self.get_index(indices)
-        indices_ext_flat = [item for sublist in indices_ext for item in sublist]
-        value, _, rnn_hxs,beta_v = self.base(inputs[indices_ext_flat], rnn_hxs[indices_ext_flat], masks[indices_ext_flat])
-        value_mixed = []
-        idx = 0
-        for i in range(len(indices)):
-            prev_value = prev_value_list[indices_ext[i][0]]
-            for p in indices_ext[i]:
-                prev_value = masks[p] * prev_value + (1 - masks[p]) * value[idx]
-                prev_value = beta_v[idx]* value[idx] + (1 - beta_v[idx]) * prev_value
-                prev_value = prev_value - rewards[p]
-                idx += 1
-            value_mixed.append(prev_value+rewards[p])
-        value_mixed = torch.stack(value_mixed, dim=0)
+        if self.is_recurrent:
+            value, actor_features, rnn_hxs,beta_v = self.base(inputs[indices], rnn_hxs[indices], masks[indices])
+            dist = self.dist(actor_features)
+            action_log_probs = dist.log_probs(action[indices])
+            dist_entropy = dist.entropy().mean()
+            value_mixed = []
+            prev_value = prev_value_list[0]
+            for i in range(len(indices)):
+                prev_value = masks[i] * prev_value + (1 - masks[i]) * value[i]
+                prev_value = beta_v[i] * value[i] + (1 - beta_v[i]) * prev_value
+                if self.sub_reward:
+                    prev_value -= rewards[i]
+                value_mixed.append(prev_value)
+            value_mixed = torch.stack(value_mixed, dim=0)
+        else:
+            _, actor_features, _,_ = self.base(inputs[indices], rnn_hxs[indices], masks[indices])
+            dist = self.dist(actor_features)
+            action_log_probs = dist.log_probs(action[indices])
+            dist_entropy = dist.entropy().mean()
+
+            indices_ext = self.get_index(indices)
+            indices_ext_flat = [item for sublist in indices_ext for item in sublist]
+            value, _, rnn_hxs,beta_v = self.base(inputs[indices_ext_flat], rnn_hxs[indices_ext_flat], masks[indices_ext_flat])
+            value_mixed = []
+            idx = 0
+            for i in range(len(indices)):
+                prev_value = prev_value_list[indices_ext[i][0]]
+                for p in indices_ext[i]:
+                    prev_value = masks[p] * prev_value + (1 - masks[p]) * value[idx]
+                    prev_value = beta_v[idx]* value[idx] + (1 - beta_v[idx]) * prev_value
+                    if self.sub_reward:
+                        prev_value -=  rewards[p]
+                    idx += 1
+                if self.sub_reward:
+                    value_mixed.append(prev_value+rewards[p])
+                else:
+                    value_mixed.append(prev_value )
+            value_mixed = torch.stack(value_mixed, dim=0)
         return value_mixed, action_log_probs, dist_entropy, rnn_hxs, beta_v
+
 
 
 class NNBase(nn.Module):
