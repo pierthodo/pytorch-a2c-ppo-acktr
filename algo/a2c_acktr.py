@@ -49,18 +49,23 @@ class A2C_ACKTR():
              {'params':self.param_value,'lr':lr_value},
              {'params': self.bias_list, 'lr': lr_beta}], lr, eps=eps, alpha=alpha)
 
-    def update(self, rollouts): #### POSSIBLE TO SPEED UP A2C BY NOT REDOING THE ALL GRAPH TODO
+    def update(self, rollouts):
         obs_shape = rollouts.obs.size()[2:]
         action_shape = rollouts.actions.size()[-1]
         num_steps, num_processes, _ = rollouts.rewards.size()
 
-        values, action_log_probs, dist_entropy, _, betas = self.actor_critic.evaluate_actions(
-            rollouts.obs[:-1].view(-1, *rollouts.obs.size()[2:]), rollouts.recurrent_hidden_states[:-1].view(-1,
-                                    rollouts.recurrent_hidden_states.size(-1)),
-            rollouts.masks[:-1].view(-1, 1), rollouts.actions.view(-1, rollouts.actions.size(-1)),
-            range(num_steps*num_processes), rollouts.rewards.view(-1, 1),rollouts.prev_value.view(-1,1))
+        value_mixed, action_log_probs, dist_entropy, rnn_hxs, beta_v = self.actor_critic.evaluate_actions(
+            rollouts.obs[:-1],
+            rollouts.recurrent_hidden_states[0],
+            rollouts.masks[:-1],
+            rollouts.actions,
+            0,
+            rollouts.rewards,
+            rollouts.prev_value,
+            )
 
-        values = values.view(num_steps, num_processes, 1)
+
+        values = value_mixed.view(num_steps, num_processes, 1)
         action_log_probs = action_log_probs.view(num_steps, num_processes, 1)
 
         advantages = rollouts.returns[:-1] - values
