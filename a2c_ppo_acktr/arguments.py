@@ -42,8 +42,8 @@ def get_args():
         help='discount factor for rewards (default: 0.99)')
     parser.add_argument(
         '--use-gae',
-        action='store_true',
-        default=False,
+        default=0,
+        type=int,
         help='use generalized advantage estimation')
     parser.add_argument(
         '--gae-lambda',
@@ -136,18 +136,18 @@ def get_args():
         help='disables CUDA training')
     parser.add_argument(
         '--use-proper-time-limits',
-        action='store_true',
-        default=False,
+        type=int,
+        default=0,
         help='compute returns taking into account time limits')
     parser.add_argument(
         '--recurrent-policy',
-        action='store_true',
-        default=False,
+        type=int,
+        default=0,
         help='use a recurrent policy')
     parser.add_argument(
         '--use-linear-lr-decay',
-        action='store_true',
-        default=False,
+        type=int,
+        default=0,
         help='use a linear schedule on the learning rate')
     parser.add_argument(
         '--est-value',
@@ -158,6 +158,10 @@ def get_args():
         type=int,
         default=5,
         help='Truncate backprop after n step')
+    parser.add_argument('--offline-directory',
+        type=str,
+        default='./',
+        help='Store result')
     args = parser.parse_args()
 
     args.cuda = not args.no_cuda and torch.cuda.is_available()
