@@ -1,9 +1,9 @@
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
 
-from a2c_ppo_acktr.distributions import Categorical, DiagGaussian, Bernoulli
+from a2c_ppo_acktr.distributions import Bernoulli, Categorical, DiagGaussian
 from a2c_ppo_acktr.utils import init
 
 
@@ -13,7 +13,10 @@ class Flatten(nn.Module):
 
 
 class Policy(nn.Module):
-    def __init__(self, obs_shape, action_space, base=None, base_kwargs=None):
+    def __init__(self, obs_shape, action_space,num_processes=1,N_backprop=5,num_steps=5, base=None, base_kwargs=None):
+        self.N_backprop = N_backprop
+        self.num_processes = num_processes
+        self.num_steps = num_steps
         super(Policy, self).__init__()
         if base_kwargs is None:
             base_kwargs = {}
@@ -51,11 +54,15 @@ class Policy(nn.Module):
     def forward(self, inputs, rnn_hxs, masks):
         raise NotImplementedError
 
-    def act(self, inputs, rnn_hxs, masks, prev_action_mean, deterministic=False):
-        value, actor_features, rnn_hxs , beta_actor = self.base(inputs, rnn_hxs, masks)
+    def act(self, inputs, rnn_hxs, masks, prev_value, deterministic=False):
+        value, actor_features, rnn_hxs, beta_v = self.base(inputs, rnn_hxs, masks)
 
-        dist = self.dist(actor_features,prev_action_mean,beta_actor)
-        action_mean = dist.loc
+        ## RECURRENT LEARNING ADDITION ###
+        prev_value = masks * prev_value + (1 - masks) * value
+        value_mixed = beta_v * value + (1 - beta_v) * prev_value
+        ##
+        dist = self.dist(actor_features)
+
         if deterministic:
             action = dist.mode()
         else:
@@ -64,35 +71,55 @@ class Policy(nn.Module):
         action_log_probs = dist.log_probs(action)
         dist_entropy = dist.entropy().mean()
 
-        return value, action, action_log_probs, rnn_hxs, action_mean,beta_actor
+        return value, action, action_log_probs, rnn_hxs, value_mixed
 
     def get_value(self, inputs, rnn_hxs, masks):
         value, _, _, _ = self.base(inputs, rnn_hxs, masks)
         return value
 
-    def evaluate_actions(self, inputs, rnn_hxs, masks, action,eval_prev_mean): #TODO fix masks overlapp between threads
-        value_list = []
-        action_log_probs = []
-        dist_entropy = []
+    def get_index(self,indices):
+        del_index = [i*self.num_steps for i in list(range(self.num_processes))] ## First you identify the index of the end of the storage of the processes
+        index_ext = []
+        for b in indices:
+            lim = del_index[int(b/(self.num_steps))]
+            tmp = []
+            for i in reversed(range(self.N_backprop)):
+                if not b-i < 0: # if the index used goes on another process memory than block it
+                    tmp.append(b-i)
+            index_ext.append(tmp)
+        return index_ext
 
+    def evaluate_actions(self, inputs, rnn_hxs, masks, action,prev_value_list,indices):
 
-        for i in range(inputs.size()[0]):
-            value, actor_features, _, betas_actor = self.base(inputs[i,:,:], rnn_hxs, masks[i,:,:])
-            value_list.append(value)
+        ## RECURRENT TD
+        value_original, actor_features, _, _ = self.base(inputs[indices], rnn_hxs[indices], masks[indices])
+        dist = self.dist(actor_features)
 
-            dist= self.dist(actor_features, eval_prev_mean, betas_actor)
-            eval_prev_mean = dist.loc
-            action_log_probs.append(dist.log_probs(action[i,:,:]))
-            dist_entropy.append(dist.entropy())
+        action_log_probs = dist.log_probs(action[indices])
+        dist_entropy = dist.entropy().mean()
 
-        action_log_probs = torch.stack(action_log_probs)
-        dist_entropy = torch.stack(dist_entropy).mean()
-        v = torch.stack(value_list)
-        return torch.stack(value_list), action_log_probs, dist_entropy, rnn_hxs,eval_prev_mean
+        indices_ext = self.get_index(indices)
+        indices_ext_flat = [item for sublist in indices_ext for item in sublist]
+        value, _, _, beta_v = self.base(inputs[indices_ext_flat], rnn_hxs[indices_ext_flat],
+                                              masks[indices_ext_flat])
+        value_mixed = []
+        idx = 0
+        for i in range(len(indices)):
+            prev_value = prev_value_list[indices_ext[i][0]]
+            for p in indices_ext[i]:
+                prev_value = masks[p] * prev_value + (1 - masks[p]) * value[idx]
+                prev_value = beta_v[idx] * value[idx] + (1 - beta_v[idx]) * prev_value
+                idx += 1
+            value_mixed.append(prev_value)
+
+        value_mixed = torch.stack(value_mixed, dim=0)
+        #
+        #value_mixed, _, _, _ = self.base(inputs[indices], rnn_hxs[indices], masks[indices])
+        # TODO: The issue is value mixed and value original are equal but the test fails. I dont understand why. N_backprop 1 works but not 2
+        return value_mixed, action_log_probs, dist_entropy, rnn_hxs
 
 
 class NNBase(nn.Module):
-
     def __init__(self, recurrent, recurrent_input_size, hidden_size):
         super(NNBase, self).__init__()
 
@@ -145,7 +172,6 @@ class NNBase(nn.Module):
                             .squeeze()
                             .cpu())
 
-
             # +1 to correct the masks[1:]
             if has_zeros.dim() == 0:
                 # Deal with scalar
@@ -155,7 +181,6 @@ class NNBase(nn.Module):
 
             # add t=0 and t=T to the list
             has_zeros = [0] + has_zeros + [T]
-
 
             hxs = hxs.unsqueeze(0)
             outputs = []
@@ -167,8 +192,7 @@ class NNBase(nn.Module):
 
                 rnn_scores, hxs = self.gru(
                     x[start_idx:end_idx],
-                    hxs * masks[start_idx].view(1, -1, 1)
-                )
+                    hxs * masks[start_idx].view(1, -1, 1))
 
                 outputs.append(rnn_scores)
 
@@ -186,26 +210,17 @@ class CNNBase(NNBase):
     def __init__(self, num_inputs, recurrent=False, hidden_size=512):
         super(CNNBase, self).__init__(recurrent, hidden_size, hidden_size)
 
-        init_ = lambda m: init(m,
-            nn.init.orthogonal_,
-            lambda x: nn.init.constant_(x, 0),
-            nn.init.calculate_gain('relu'))
+        init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.
+                               constant_(x, 0), nn.init.calculate_gain('relu'))
 
         self.main = nn.Sequential(
-            init_(nn.Conv2d(num_inputs, 32, 8, stride=4)),
-            nn.ReLU(),
-            init_(nn.Conv2d(32, 64, 4, stride=2)),
-            nn.ReLU(),
-            init_(nn.Conv2d(64, 32, 3, stride=1)),
-            nn.ReLU(),
-            Flatten(),
-            init_(nn.Linear(32 * 7 * 7, hidden_size)),
-            nn.ReLU()
-        )
+            init_(nn.Conv2d(num_inputs, 32, 8, stride=4)), nn.ReLU(),
+            init_(nn.Conv2d(32, 64, 4, stride=2)), nn.ReLU(),
+            init_(nn.Conv2d(64, 32, 3, stride=1)), nn.ReLU(), Flatten(),
+            init_(nn.Linear(32 * 7 * 7, hidden_size)), nn.ReLU())
 
-        init_ = lambda m: init(m,
-            nn.init.orthogonal_,
-            lambda x: nn.init.constant_(x, 0))
+        init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.
+                               constant_(x, 0))
 
         self.critic_linear = init_(nn.Linear(hidden_size, 1))
 
@@ -221,48 +236,44 @@ class CNNBase(NNBase):
 
 
 class MLPBase(NNBase):
-    def __init__(self, num_inputs, recurrent=False, hidden_size=64,init_bias = 3,est_beta_actor=True):
+    def __init__(self, num_inputs, recurrent=False, hidden_size=64, est_value = False):
         super(MLPBase, self).__init__(recurrent, num_inputs, hidden_size)
-        self.est_beta_actor = est_beta_actor
+        self.est_value = est_value
         if recurrent:
             num_inputs = hidden_size
 
-        init_ = lambda m: init(m,
-            nn.init.orthogonal_,
-            lambda x: nn.init.constant_(x, 0),
-            np.sqrt(2))
+        init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.
+                               constant_(x, 0), np.sqrt(2))
 
         self.actor = nn.Sequential(
-            init_(nn.Linear(num_inputs, hidden_size)),
-            nn.Tanh(),
-            init_(nn.Linear(hidden_size, hidden_size)),
-            nn.Tanh()
-        )
+            init_(nn.Linear(num_inputs, hidden_size)), nn.Tanh(),
+            init_(nn.Linear(hidden_size, hidden_size)), nn.Tanh())
 
         self.critic = nn.Sequential(
-            init_(nn.Linear(num_inputs, hidden_size)),
-            nn.Tanh(),
-            init_(nn.Linear(hidden_size, hidden_size)),
-            nn.Tanh()
-        )
+            init_(nn.Linear(num_inputs, hidden_size)), nn.Tanh(),
+            init_(nn.Linear(hidden_size, hidden_size)), nn.Tanh())
 
         self.critic_linear = init_(nn.Linear(hidden_size, 1))
 
+        ## RECURRENT TD
         init_ = lambda m: init(m,
             nn.init.orthogonal_,
-            lambda x: nn.init.constant_(x, init_bias))
+            lambda x: nn.init.constant_(x, 0))
 
-        self.beta_net_actor = nn.Sequential(
+        self.beta_net_value = nn.Sequential(
             init_(nn.Linear(num_inputs, hidden_size)),
             nn.Tanh(),
             init_(nn.Linear(hidden_size, hidden_size)),
             nn.Tanh()
         )
 
-        self.beta_net_actor_linear = nn.Sequential(
+        self.beta_net_value_linear = nn.Sequential(
             init_(nn.Linear(hidden_size, 1)),
             nn.Sigmoid()
         )
+        ##
+
+
         self.train()
 
     def forward(self, inputs, rnn_hxs, masks):
@@ -275,10 +286,13 @@ class MLPBase(NNBase):
         hidden_actor = self.actor(x)
 
 
-        if self.est_beta_actor:
-            hidden_actor_beta = self.beta_net_actor(x)
-            beta_actor = self.beta_net_actor_linear(hidden_actor_beta)
+        ### RECURRENT TD
+        if self.est_value:
+            hidden_value_beta = self.beta_net_value(x)
+            beta_value = self.beta_net_value_linear(hidden_value_beta)
         else:
-            beta_actor = torch.ones_like(masks)
+            beta_value = torch.ones_like(masks)
+        ##
 
-        return self.critic_linear(hidden_critic), hidden_actor, rnn_hxs,beta_actor
+
+        return self.critic_linear(hidden_critic), hidden_actor, rnn_hxs, beta_value
