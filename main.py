@@ -192,7 +192,7 @@ def main():
             ob_rms = utils.get_vec_normalize(envs).ob_rms
             evaluate(actor_critic, ob_rms, args.env_name, args.seed,
                      args.num_processes, eval_log_dir, device)
-    pickle.dump(result,open(args.offline_directory+"/data.pkl","wb"))
+    pickle.dump(result,open(args.offline_directory+"data.pkl","wb"))
 
 if __name__ == "__main__":
     main()
