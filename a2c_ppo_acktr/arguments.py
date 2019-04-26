@@ -162,6 +162,10 @@ def get_args():
         type=str,
         default='./',
         help='Store result')
+    parser.add_argument('--noise-obs',
+        type=float,
+        default=0
+                        )
     args = parser.parse_args()
 
     args.cuda = not args.no_cuda and torch.cuda.is_available()
