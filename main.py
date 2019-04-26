@@ -188,8 +188,8 @@ def main():
                         np.max(episode_rewards), dist_entropy, value_loss,
                         action_loss))
             result.append({"step":j * args.num_steps * args.num_processes,"mean reward": np.mean(episode_rewards),
-                           "beta mean":np.array(rollouts.beta_v.data).mean(),
-                           "beta std":np.array(rollouts.beta_v.data).std()})
+                           "beta mean":np.array(rollouts.beta_v.data.cpu()).mean(),
+                           "beta std":np.array(rollouts.beta_v.data.cpu()).std()})
         if (args.eval_interval is not None and len(episode_rewards) > 1
                 and j % args.eval_interval == 0):
             ob_rms = utils.get_vec_normalize(envs).ob_rms
