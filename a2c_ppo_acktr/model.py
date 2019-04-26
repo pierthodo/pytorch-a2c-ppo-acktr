@@ -71,7 +71,7 @@ class Policy(nn.Module):
         action_log_probs = dist.log_probs(action)
         dist_entropy = dist.entropy().mean()
 
-        return value, action, action_log_probs, rnn_hxs, value_mixed
+        return value, action, action_log_probs, rnn_hxs, value_mixed, beta_v
 
     def get_value(self, inputs, rnn_hxs, masks):
         value, _, _, _ = self.base(inputs, rnn_hxs, masks)
@@ -115,7 +115,6 @@ class Policy(nn.Module):
         value_mixed = torch.stack(value_mixed, dim=0)
         #
         #value_mixed, _, _, _ = self.base(inputs[indices], rnn_hxs[indices], masks[indices])
-        # TODO: The issue is value mixed and value original are equal but the test fails. I dont understand why. N_backprop 1 works but not 2
         return value_mixed, action_log_probs, dist_entropy, rnn_hxs
 
 

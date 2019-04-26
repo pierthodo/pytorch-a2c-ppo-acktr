@@ -25,6 +25,7 @@ class RolloutStorage(object):
         if action_space.__class__.__name__ == 'Discrete':
             self.actions = self.actions.long()
         self.masks = torch.ones(num_steps + 1, num_processes, 1)
+        self.beta_v = torch.zeros(num_steps, num_processes, 1)
 
         # Masks that indicate whether it's a true terminal state
         # or time limit end state
@@ -44,10 +45,10 @@ class RolloutStorage(object):
         self.masks = self.masks.to(device)
         self.bad_masks = self.bad_masks.to(device)
         self.value_mixed = self.value_mixed.to(device)
-
+        self.beta_v = self.beta_v.to(device)
 
     def insert(self, obs, recurrent_hidden_states, actions, action_log_probs,
-               value_preds, rewards, masks, bad_masks,value_mixed):
+               value_preds, rewards, masks, bad_masks,value_mixed,beta_v):
         self.obs[self.step + 1].copy_(obs)
         self.recurrent_hidden_states[self.step +
                                      1].copy_(recurrent_hidden_states)
@@ -58,7 +59,7 @@ class RolloutStorage(object):
         self.masks[self.step + 1].copy_(masks)
         self.bad_masks[self.step + 1].copy_(bad_masks)
         self.value_mixed[self.step + 1].copy_(value_mixed)
-
+        self.beta_v[self.step].copy_(beta_v)
         self.step = (self.step + 1) % self.num_steps
 
     def after_update(self):

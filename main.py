@@ -98,6 +98,7 @@ def main():
 
     episode_rewards = deque(maxlen=10)
     result = []
+
     start = time.time()
     prev_value = 0
     num_updates = int(
@@ -113,7 +114,7 @@ def main():
         for step in range(args.num_steps):
             # Sample actions
             with torch.no_grad():
-                value, action, action_log_prob, recurrent_hidden_states, value_mixed = actor_critic.act(
+                value, action, action_log_prob, recurrent_hidden_states, value_mixed, beta_v = actor_critic.act(
                     rollouts.obs[step], rollouts.recurrent_hidden_states[step],
                     rollouts.masks[step],prev_value)
 
@@ -131,8 +132,8 @@ def main():
                 [[0.0] if 'bad_transition' in info.keys() else [1.0]
                  for info in infos])
             rollouts.insert(obs, recurrent_hidden_states, action,
-                            action_log_prob, value, reward, masks, bad_masks, value_mixed)
-
+                            action_log_prob, value, reward, masks, bad_masks, value_mixed,beta_v)
+            prev_value = value_mixed
         with torch.no_grad():
             next_value = actor_critic.get_value(
                 rollouts.obs[-1], rollouts.recurrent_hidden_states[-1],
@@ -186,7 +187,9 @@ def main():
                         np.median(episode_rewards), np.min(episode_rewards),
                         np.max(episode_rewards), dist_entropy, value_loss,
                         action_loss))
-            result.append({"step":j * args.num_steps * args.num_processes,"mean reward": np.mean(episode_rewards)})
+            result.append({"step":j * args.num_steps * args.num_processes,"mean reward": np.mean(episode_rewards),
+                           "beta mean":np.array(rollouts.beta_v.data).mean(),
+                           "beta std":np.array(rollouts.beta_v.data).std()})
         if (args.eval_interval is not None and len(episode_rewards) > 1
                 and j % args.eval_interval == 0):
             ob_rms = utils.get_vec_normalize(envs).ob_rms
