@@ -13,6 +13,7 @@ class PPO():
                  value_loss_coef,
                  entropy_coef,
                  lr=None,
+                 lr_beta=None,
                  eps=None,
                  max_grad_norm=None,
                  use_clipped_value_loss=True):
@@ -28,6 +29,19 @@ class PPO():
 
         self.max_grad_norm = max_grad_norm
         self.use_clipped_value_loss = use_clipped_value_loss
+
+
+        self.param_beta = []
+        self.param_list = []
+        for name, param in actor_critic.named_parameters():
+            if "beta" in name :
+                self.param_beta.append(param)
+            else:
+                self.param_list.append(param)
+        self.optimizer = optim.Adam(
+            [{'params': self.param_list},
+             {'params': self.param_beta, 'lr': lr_beta}], lr, eps=eps)
+
 
         self.optimizer = optim.Adam(actor_critic.parameters(), lr=lr, eps=eps)
 

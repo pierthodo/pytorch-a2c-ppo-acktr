@@ -66,6 +66,7 @@ def main():
             args.value_loss_coef,
             args.entropy_coef,
             lr=args.lr,
+            lr_beta=args.lr_beta,
             eps=args.eps,
             max_grad_norm=args.max_grad_norm)
     elif args.algo == 'acktr':
