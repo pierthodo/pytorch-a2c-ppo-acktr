@@ -74,12 +74,17 @@ class PPO():
                     rollouts.actions.view(-1, rollouts.actions.size(-1)),
                     rollouts.value_mixed.view(-1,1),indices)
 
+                normalized_beta = ((mean_beta_v / mean_beta_v.sum()) * mean_beta_v.size()[0]).view(-1, 1)
                 ratio = torch.exp(action_log_probs -
                                   old_action_log_probs_batch)
                 surr1 = ratio * adv_targ
                 surr2 = torch.clamp(ratio, 1.0 - self.clip_param,
                                     1.0 + self.clip_param) * adv_targ
-                action_loss = -torch.min(surr1, surr2).mean()
+                if self.weighted_loss:
+                    surr1 *= normalized_beta
+                    surr2 *= normalized_beta
+
+                action_loss = (-torch.min(surr1, surr2)).mean()
 
                 if self.use_clipped_value_loss:
                     #raise("THIS CRAP USES CLIPPED VALUE LOSS TO FIX AND RETEST HYPER...")
@@ -87,15 +92,12 @@ class PPO():
                         (values - value_preds_batch).clamp(-self.clip_param, self.clip_param)
                     value_losses = (values - return_batch).pow(2)
 
-
-
                     value_losses_clipped = (
                         value_pred_clipped - return_batch).pow(2)
 
                     if self.weighted_loss:
-                        normalized_beta = ((mean_beta_v / mean_beta_v.sum())*mean_beta_v.size()[0]).view(-1,1)
-                        value_losses = value_losses * normalized_beta
-                        value_losses_clipped = value_losses_clipped * normalized_beta
+                        value_losses *=  normalized_beta
+                        value_losses_clipped *=  normalized_beta
 
                     value_loss = 0.5 * torch.max(value_losses,
                                                  value_losses_clipped).mean()
