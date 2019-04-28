@@ -42,9 +42,6 @@ class PPO():
             [{'params': self.param_list},
              {'params': self.param_beta, 'lr': lr_beta}], lr, eps=eps)
 
-
-        self.optimizer = optim.Adam(actor_critic.parameters(), lr=lr, eps=eps)
-
     def update(self, rollouts):
         advantages = rollouts.returns[:-1] - rollouts.value_mixed[1:]
         advantages = (advantages - advantages.mean()) / (

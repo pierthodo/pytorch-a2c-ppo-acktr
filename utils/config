@@ -27,7 +27,7 @@ ppo
 --num-env-steps
 1000000
 --use-linear-lr-decay
-1
+0
 --use-proper-time-limits
 1
 --seed
@@ -36,3 +36,5 @@ ppo
 1
 --N-backprop
 5
+--lr-beta
+0.0006

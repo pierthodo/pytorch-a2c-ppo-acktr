@@ -193,12 +193,15 @@ def main():
             result.append({"step":j * args.num_steps * args.num_processes,"mean reward": np.mean(episode_rewards),
                            "beta mean":np.array(rollouts.beta_v.data.cpu()).mean(),
                            "beta std":np.array(rollouts.beta_v.data.cpu()).std()})
+
+        if j % 10 == 0 and len(episode_rewards) > 1:
+            pickle.dump(result, open(args.offline_directory + "data.pkl", "wb"))
+
         if (args.eval_interval is not None and len(episode_rewards) > 1
                 and j % args.eval_interval == 0):
             ob_rms = utils.get_vec_normalize(envs).ob_rms
             evaluate(actor_critic, ob_rms, args.env_name, args.seed,
                      args.num_processes, eval_log_dir, device)
-    pickle.dump(result,open(args.offline_directory+"data.pkl","wb"))
 
 if __name__ == "__main__":
     main()
