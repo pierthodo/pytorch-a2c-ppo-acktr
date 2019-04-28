@@ -170,6 +170,10 @@ def get_args():
         type=float,
         default=0.0003
                         )
+    parser.add_argument('--weighted-loss',
+        type=int,
+        default=0,
+                        )
     args = parser.parse_args()
 
     args.cuda = not args.no_cuda and torch.cuda.is_available()

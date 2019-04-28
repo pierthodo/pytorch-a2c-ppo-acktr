@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+from torchvision import transforms
 
 
 class PPO():
@@ -16,10 +17,11 @@ class PPO():
                  lr_beta=None,
                  eps=None,
                  max_grad_norm=None,
+                 weighted_loss=0,
                  use_clipped_value_loss=True):
 
         self.actor_critic = actor_critic
-
+        self.weighted_loss = weighted_loss
         self.clip_param = clip_param
         self.ppo_epoch = ppo_epoch
         self.num_mini_batch = num_mini_batch
@@ -65,7 +67,7 @@ class PPO():
                         adv_targ,indices  = sample
 
                 # Reshape to do in a single forward pass for all steps
-                values, action_log_probs, dist_entropy, _ = self.actor_critic.evaluate_actions(
+                values, action_log_probs, dist_entropy, _, mean_beta_v = self.actor_critic.evaluate_actions(
                     rollouts.obs[:-1].view(-1, *rollouts.obs.size()[2:]),
                     rollouts.recurrent_hidden_states[:-1].view(-1,rollouts.recurrent_hidden_states.size(-1)),
                     rollouts.masks[:-1].view(-1, 1),
@@ -80,15 +82,26 @@ class PPO():
                 action_loss = -torch.min(surr1, surr2).mean()
 
                 if self.use_clipped_value_loss:
+                    #raise("THIS CRAP USES CLIPPED VALUE LOSS TO FIX AND RETEST HYPER...")
                     value_pred_clipped = value_preds_batch + \
                         (values - value_preds_batch).clamp(-self.clip_param, self.clip_param)
                     value_losses = (values - return_batch).pow(2)
+
+
+
                     value_losses_clipped = (
                         value_pred_clipped - return_batch).pow(2)
+
+                    if self.weighted_loss:
+                        normalized_beta = ((mean_beta_v / mean_beta_v.sum())*mean_beta_v.size()[0]).view(-1,1)
+                        value_losses = value_losses * normalized_beta
+                        value_losses_clipped = value_losses_clipped * normalized_beta
+
                     value_loss = 0.5 * torch.max(value_losses,
                                                  value_losses_clipped).mean()
                 else:
                     value_loss = 0.5 * (return_batch - values).pow(2).mean()
+
 
                 self.optimizer.zero_grad()
                 (value_loss * self.value_loss_coef + action_loss -

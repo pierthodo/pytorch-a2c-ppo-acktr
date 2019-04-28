@@ -68,6 +68,7 @@ def main():
             lr=args.lr,
             lr_beta=args.lr_beta,
             eps=args.eps,
+            weighted_loss=args.weighted_loss,
             max_grad_norm=args.max_grad_norm)
     elif args.algo == 'acktr':
         agent = algo.A2C_ACKTR(

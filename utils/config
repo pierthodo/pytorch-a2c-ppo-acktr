@@ -38,3 +38,5 @@ ppo
 5
 --lr-beta
 0.0006
+--weighted-loss
+1

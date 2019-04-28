@@ -103,19 +103,25 @@ class Policy(nn.Module):
         value, _, _, beta_v = self.base(inputs[indices_ext_flat], rnn_hxs[indices_ext_flat],
                                               masks[indices_ext_flat])
         value_mixed = []
+        mean_beta_v_list = []
         idx = 0
         for i in range(len(indices)):
             prev_value = prev_value_list[indices_ext[i][0]]
+            mean_beta_v = []
             for p in indices_ext[i]:
                 prev_value = masks[p] * prev_value + (1 - masks[p]) * value[idx]
                 prev_value = beta_v[idx] * value[idx] + (1 - beta_v[idx]) * prev_value
+                mean_beta_v.append(beta_v[idx])
                 idx += 1
+
+            mean_beta_v_list.append(torch.stack(mean_beta_v,dim=0).mean())
             value_mixed.append(prev_value)
 
         value_mixed = torch.stack(value_mixed, dim=0)
+        mean_beta_v = torch.stack(mean_beta_v_list,dim=0).detach()
         #
         #value_mixed, _, _, _ = self.base(inputs[indices], rnn_hxs[indices], masks[indices])
-        return value_mixed, action_log_probs, dist_entropy, rnn_hxs
+        return value_mixed, action_log_probs, dist_entropy, rnn_hxs,mean_beta_v
 
 
 class NNBase(nn.Module):
