@@ -24,10 +24,10 @@ def evaluate(actor_critic, ob_rms, env_name, seed, num_processes, eval_log_dir,
 
     while len(eval_episode_rewards) < 10:
         with torch.no_grad():
-            _, action, _, eval_recurrent_hidden_states = actor_critic.act(
+            _, action, _, eval_recurrent_hidden_states,_,_ = actor_critic.act(
                 obs,
                 eval_recurrent_hidden_states,
-                eval_masks,
+                eval_masks,0,
                 deterministic=True)
 
         # Obser reward and next obs
@@ -46,3 +46,4 @@ def evaluate(actor_critic, ob_rms, env_name, seed, num_processes, eval_log_dir,
 
     print(" Evaluation using {} episodes: mean reward {:.5f}\n".format(
         len(eval_episode_rewards), np.mean(eval_episode_rewards)))
+    return np.mean(eval_episode_rewards)

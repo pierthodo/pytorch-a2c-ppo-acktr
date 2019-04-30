@@ -13,10 +13,11 @@ class Flatten(nn.Module):
 
 
 class Policy(nn.Module):
-    def __init__(self, obs_shape, action_space,num_processes=1,N_backprop=5,num_steps=5, base=None, base_kwargs=None):
+    def __init__(self, obs_shape, action_space,num_processes=1,N_backprop=5,num_steps=5,recurrent_policy=0, base=None, base_kwargs=None):
         self.N_backprop = N_backprop
         self.num_processes = num_processes
         self.num_steps = num_steps
+        self.recurrent_policy = recurrent_policy
         super(Policy, self).__init__()
         if base_kwargs is None:
             base_kwargs = {}
@@ -92,36 +93,46 @@ class Policy(nn.Module):
     def evaluate_actions(self, inputs, rnn_hxs, masks, action,prev_value_list,indices):
 
         ## RECURRENT TD
-        value_original, actor_features, _, _ = self.base(inputs[indices], rnn_hxs[indices], masks[indices])
-        dist = self.dist(actor_features)
+        if self.recurrent_policy:
+            value, actor_features, rnn_hxs,beta_v = self.base(inputs, rnn_hxs, masks)
+            dist = self.dist(actor_features)
 
-        action_log_probs = dist.log_probs(action[indices])
-        dist_entropy = dist.entropy().mean()
+            action_log_probs = dist.log_probs(action)
+            dist_entropy = dist.entropy().mean()
 
-        indices_ext = self.get_index(indices)
-        indices_ext_flat = [item for sublist in indices_ext for item in sublist]
-        value, _, _, beta_v = self.base(inputs[indices_ext_flat], rnn_hxs[indices_ext_flat],
-                                              masks[indices_ext_flat])
-        value_mixed = []
-        mean_beta_v_list = []
-        idx = 0
-        for i in range(len(indices)):
-            prev_value = prev_value_list[indices_ext[i][0]]
-            mean_beta_v = []
-            for p in indices_ext[i]:
-                prev_value = masks[p] * prev_value + (1 - masks[p]) * value[idx]
-                prev_value = beta_v[idx] * value[idx] + (1 - beta_v[idx]) * prev_value
-                mean_beta_v.append(beta_v[idx])
-                idx += 1
+            return value, action_log_probs, dist_entropy, rnn_hxs, beta_v
 
-            mean_beta_v_list.append(torch.stack(mean_beta_v,dim=0).mean())
-            value_mixed.append(prev_value)
+        else:
+            value_original, actor_features, _, _ = self.base(inputs[indices], rnn_hxs[indices], masks[indices])
+            dist = self.dist(actor_features)
 
-        value_mixed = torch.stack(value_mixed, dim=0)
-        mean_beta_v = torch.stack(mean_beta_v_list,dim=0).detach()
-        #
-        #value_mixed, _, _, _ = self.base(inputs[indices], rnn_hxs[indices], masks[indices])
-        return value_mixed, action_log_probs, dist_entropy, rnn_hxs,mean_beta_v
+            action_log_probs = dist.log_probs(action[indices])
+            dist_entropy = dist.entropy().mean()
+
+            indices_ext = self.get_index(indices)
+            indices_ext_flat = [item for sublist in indices_ext for item in sublist]
+            value, _, _, beta_v = self.base(inputs[indices_ext_flat], rnn_hxs[indices_ext_flat],
+                                                  masks[indices_ext_flat])
+            value_mixed = []
+            mean_beta_v_list = []
+            idx = 0
+            for i in range(len(indices)):
+                prev_value = prev_value_list[indices_ext[i][0]]
+                mean_beta_v = []
+                for p in indices_ext[i]:
+                    prev_value = masks[p] * prev_value + (1 - masks[p]) * value[idx]
+                    prev_value = beta_v[idx] * value[idx] + (1 - beta_v[idx]) * prev_value
+                    mean_beta_v.append(beta_v[idx])
+                    idx += 1
+
+                mean_beta_v_list.append(torch.stack(mean_beta_v,dim=0).mean())
+                value_mixed.append(prev_value)
+
+            value_mixed = torch.stack(value_mixed, dim=0)
+            mean_beta_v = torch.stack(mean_beta_v_list,dim=0).detach()
+            #
+            #value_mixed, _, _, _ = self.base(inputs[indices], rnn_hxs[indices], masks[indices])
+            return value_mixed, action_log_probs, dist_entropy, rnn_hxs,mean_beta_v
 
 
 class NNBase(nn.Module):

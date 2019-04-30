@@ -22,7 +22,7 @@ from evaluation import evaluate
 
 def main():
     args = get_args()
-    if args.algo in ["a2c","acktr"] or args.recurrent_policy:
+    if args.algo in ["a2c","acktr"]:
         raise "Not implemented"
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed_all(args.seed)
@@ -44,7 +44,7 @@ def main():
 
     actor_critic = Policy(
         envs.observation_space.shape,
-        envs.action_space,args.num_processes,args.N_backprop,args.num_steps,
+        envs.action_space,args.num_processes,args.N_backprop,args.num_steps,args.recurrent_policy,
         base_kwargs={'recurrent': args.recurrent_policy,'est_value': args.est_value})
     actor_critic.to(device)
 
@@ -100,7 +100,7 @@ def main():
 
     episode_rewards = deque(maxlen=10)
     result = []
-
+    result_val = []
     start = time.time()
     prev_value = 0
     num_updates = int(
@@ -178,7 +178,7 @@ def main():
             torch.save([
                 actor_critic,
                 getattr(utils.get_vec_normalize(envs), 'ob_rms', None)
-            ], os.path.join(save_path, args.env_name + ".pt"))
+            ], os.path.join(save_path, "model"+ ".pt"))
 
         if j % args.log_interval == 0 and len(episode_rewards) > 1:
             total_num_steps = (j + 1) * args.num_processes * args.num_steps
@@ -197,12 +197,16 @@ def main():
 
         if j % 10 == 0 and len(episode_rewards) > 1:
             pickle.dump(result, open(args.offline_directory + "data.pkl", "wb"))
+            pickle.dump(np.array(result_val),open(args.offline_directory + "val_data.pkl", "wb"))
 
         if (args.eval_interval is not None and len(episode_rewards) > 1
                 and j % args.eval_interval == 0):
-            ob_rms = utils.get_vec_normalize(envs).ob_rms
-            evaluate(actor_critic, ob_rms, args.env_name, args.seed,
-                     args.num_processes, eval_log_dir, device)
+            mean_reward_val = []
+            for i in range(10):
+                ob_rms = utils.get_vec_normalize(envs).ob_rms
+                mean_reward_val.append(evaluate(actor_critic, ob_rms, args.env_name, i+10000,
+                         args.num_processes, eval_log_dir, device))
+            result_val.append({"step":j * args.num_steps * args.num_processes,"val reward":np.array(mean_reward_val).mean()})
 
 if __name__ == "__main__":
     main()

@@ -74,13 +74,14 @@ class PPO():
                     rollouts.actions.view(-1, rollouts.actions.size(-1)),
                     rollouts.value_mixed.view(-1,1),indices)
 
-                normalized_beta = ((mean_beta_v / mean_beta_v.sum()) * mean_beta_v.size()[0]).view(-1, 1)
+
                 ratio = torch.exp(action_log_probs -
                                   old_action_log_probs_batch)
                 surr1 = ratio * adv_targ
                 surr2 = torch.clamp(ratio, 1.0 - self.clip_param,
                                     1.0 + self.clip_param) * adv_targ
                 if self.weighted_loss:
+                    normalized_beta = ((mean_beta_v / mean_beta_v.sum()) * mean_beta_v.size()[0]).view(-1, 1)
                     surr1 *= normalized_beta
                     surr2 *= normalized_beta
 
