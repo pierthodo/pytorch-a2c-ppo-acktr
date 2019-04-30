@@ -16,6 +16,7 @@ class PPO():
                  lr=None,
                  lr_beta=None,
                  eps=None,
+                 N_recurrent=0,
                  max_grad_norm=None,
                  weighted_loss=0,
                  use_clipped_value_loss=True):
@@ -25,7 +26,7 @@ class PPO():
         self.clip_param = clip_param
         self.ppo_epoch = ppo_epoch
         self.num_mini_batch = num_mini_batch
-
+        self.N_recurrent = N_recurrent
         self.value_loss_coef = value_loss_coef
         self.entropy_coef = entropy_coef
 
@@ -54,7 +55,7 @@ class PPO():
         dist_entropy_epoch = 0
 
         for e in range(self.ppo_epoch):
-            if self.actor_critic.is_recurrent:
+            if self.actor_critic.is_recurrent and self.N_recurrent == 0:
                 data_generator = rollouts.recurrent_generator(
                     advantages, self.num_mini_batch)
             else:

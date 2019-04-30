@@ -13,11 +13,12 @@ class Flatten(nn.Module):
 
 
 class Policy(nn.Module):
-    def __init__(self, obs_shape, action_space,num_processes=1,N_backprop=5,num_steps=5,recurrent_policy=0, base=None, base_kwargs=None):
+    def __init__(self, obs_shape, action_space,num_processes=1,N_backprop=5,num_steps=5,recurrent_policy=0,N_recurrent=0, base=None, base_kwargs=None):
         self.N_backprop = N_backprop
         self.num_processes = num_processes
         self.num_steps = num_steps
         self.recurrent_policy = recurrent_policy
+        self.N_recurrent = N_recurrent
         super(Policy, self).__init__()
         if base_kwargs is None:
             base_kwargs = {}
@@ -93,7 +94,7 @@ class Policy(nn.Module):
     def evaluate_actions(self, inputs, rnn_hxs, masks, action,prev_value_list,indices):
 
         ## RECURRENT TD
-        if self.recurrent_policy:
+        if self.recurrent_policy and self.N_recurrent == 0:
             value, actor_features, rnn_hxs,beta_v = self.base(inputs, rnn_hxs, masks)
             dist = self.dist(actor_features)
 
@@ -101,6 +102,34 @@ class Policy(nn.Module):
             dist_entropy = dist.entropy().mean()
 
             return value, action_log_probs, dist_entropy, rnn_hxs, beta_v
+
+        elif self.recurrent_policy and self.N_recurrent > 0:
+            #raise("TO BE IMPLEMENTED")
+            indices_ext = self.get_index(indices)
+            indices_ext_flat = [item for sublist in indices_ext for item in sublist]
+            value_mixed = []
+            actor_features_list = []
+
+            for i in range(len(indices)):
+                value,actor_features,_,beta_v = self.base(inputs[indices_ext[i]],rnn_hxs[indices_ext[i]],
+                                                                masks[indices_ext[i]])
+
+                prev_value = prev_value_list[indices_ext[i][0]]
+                for idx,p in enumerate(indices_ext[i]):
+                    prev_value = masks[p] * prev_value + (1 - masks[p]) * value[idx]
+                    prev_value = beta_v[idx] * value[idx] + (1 - beta_v[idx]) * prev_value
+
+                value_mixed.append(prev_value)
+                actor_features_list.append(actor_features[-1])
+
+            value_mixed = torch.stack(value_mixed,dim=0)
+            actor_features = torch.stack(actor_features_list,dim=0)
+            dist = self.dist(actor_features)
+            action_log_probs = dist.log_probs(action[indices])
+            dist_entropy = dist.entropy().mean()
+
+            return value_mixed, action_log_probs, dist_entropy, rnn_hxs,beta_v
+
 
         else:
             value_original, actor_features, _, _ = self.base(inputs[indices], rnn_hxs[indices], masks[indices])

@@ -44,7 +44,7 @@ def main():
 
     actor_critic = Policy(
         envs.observation_space.shape,
-        envs.action_space,args.num_processes,args.N_backprop,args.num_steps,args.recurrent_policy,
+        envs.action_space,args.num_processes,args.N_backprop,args.num_steps,args.recurrent_policy,args.N_recurrent,
         base_kwargs={'recurrent': args.recurrent_policy,'est_value': args.est_value})
     actor_critic.to(device)
 
@@ -68,6 +68,7 @@ def main():
             lr=args.lr,
             lr_beta=args.lr_beta,
             eps=args.eps,
+            N_recurrent=args.N_recurrent,
             weighted_loss=args.weighted_loss,
             max_grad_norm=args.max_grad_norm)
     elif args.algo == 'acktr':
