@@ -35,10 +35,14 @@ ppo
 --gamma
 0.99
 --env-name
-Humanoid-v2
+Hopper-v2
 --num-mini-batch
 32
 --N-backprop
 5
 --ppo-epoch
 10
+--dt
+0.0003
+--offline-directory
+utils/
