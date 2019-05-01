@@ -22,7 +22,13 @@ import xml.etree.ElementTree as ET
 from gym.envs.registration import register
 
 def make_mujoco_file(env_name,offline_directory,dt):
-    tree = ET.parse('./gym/gym/envs/mujoco/assets/'+str.lower(env_name[:-3])+ '.xml')
+    game_list = {"Walker2d-v2":"walker2d",
+                 "Hopper-v2":"hopper",
+                 "Swimmer-v2":"swimmer",
+                 "HalfCheetah-v2":"half_cheetah.xml",
+                 "InvertedDoublePendulum-v2":"inverted_double_pendulum"}
+
+    tree = ET.parse('./gym/gym/envs/mujoco/assets/'+game_list[env_name]+ '.xml')
     root = tree.getroot()
     if dt != 0:
         root[2].attrib['timestep'] = str(float(root[2].attrib['timestep'])*dt)
