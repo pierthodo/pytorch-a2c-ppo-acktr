@@ -18,10 +18,24 @@ from a2c_ppo_acktr.envs import make_vec_envs
 from a2c_ppo_acktr.model import Policy
 from a2c_ppo_acktr.storage import RolloutStorage
 from evaluation import evaluate
+import xml.etree.ElementTree as ET
+from gym.envs.registration import register
 
+def make_mujoco_file(env_name,offline_directory,dt):
+    tree = ET.parse('./gym/gym/envs/mujoco/assets/'+str.lower(env_name[:-3])+ '.xml')
+    root = tree.getroot()
+    if dt != 0:
+        root[2].attrib['timestep'] = str(float(root[2].attrib['timestep'])*dt)
+    file = ET.tostring(root, encoding='utf8').decode('utf8')
+    path = offline_directory + str.lower(env_name[:-3])+ '_tmp.xml'
+    with open(path,'w') as f:
+        f.write(file)
+    return path
 
 def main():
     args = get_args()
+    path = make_mujoco_file(args.env_name,args.offline_directory,args.dt)
+
     if args.algo in ["a2c","acktr"]:
         raise "Not implemented"
     torch.manual_seed(args.seed)
@@ -40,7 +54,7 @@ def main():
     device = torch.device("cuda:0" if args.cuda else "cpu")
 
     envs = make_vec_envs(args.env_name, args.seed, args.num_processes,
-                         args.gamma, args.log_dir, device, False)
+                         args.gamma, args.log_dir, device,False,path)
 
     actor_critic = Policy(
         envs.observation_space.shape,
@@ -206,7 +220,7 @@ def main():
             for i in range(10):
                 ob_rms = utils.get_vec_normalize(envs).ob_rms
                 mean_reward_val.append(evaluate(actor_critic, ob_rms, args.env_name, i+10000,
-                         args.num_processes, eval_log_dir, device))
+                         args.num_processes, eval_log_dir, device,path))
             result_val.append({"step":j * args.num_steps * args.num_processes,"val reward":np.array(mean_reward_val).mean()})
 
 if __name__ == "__main__":

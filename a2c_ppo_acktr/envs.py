@@ -29,7 +29,7 @@ except ImportError:
     pass
 
 
-def make_env(env_id, seed, rank, log_dir, allow_early_resets):
+def make_env(env_id, seed, rank, log_dir, allow_early_resets,path):
     def _thunk():
         if env_id.startswith("dm"):
             _, domain, task = env_id.split('.')
@@ -41,6 +41,7 @@ def make_env(env_id, seed, rank, log_dir, allow_early_resets):
             env.unwrapped, gym.envs.atari.atari_env.AtariEnv)
         if is_atari:
             env = make_atari(env_id)
+            env.change_xml(path)
 
         env.seed(seed + rank)
 
@@ -80,10 +81,10 @@ def make_vec_envs(env_name,
                   gamma,
                   log_dir,
                   device,
-                  allow_early_resets,
+                  allow_early_resets,path,
                   num_frame_stack=None):
     envs = [
-        make_env(env_name, seed, i, log_dir, allow_early_resets)
+        make_env(env_name, seed, i, log_dir, allow_early_resets,path)
         for i in range(num_processes)
     ]
 

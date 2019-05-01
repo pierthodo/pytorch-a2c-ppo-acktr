@@ -178,6 +178,10 @@ def get_args():
         type=int,
         default=0,
                         )
+    parser.add_argument('--dt',
+        type=float,
+        default=1,
+        )
     args = parser.parse_args()
 
     args.cuda = not args.no_cuda and torch.cuda.is_available()
