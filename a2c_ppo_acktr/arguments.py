@@ -110,7 +110,7 @@ def get_args():
     parser.add_argument(
         '--eval-interval',
         type=int,
-        default=100,
+        default=1000,
         help='eval interval, one eval per n updates (default: None)')
     parser.add_argument(
         '--num-env-steps',

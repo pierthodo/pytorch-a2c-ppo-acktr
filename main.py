@@ -228,7 +228,7 @@ def main():
         if (args.eval_interval is not None and len(episode_rewards) > 1
                 and j % args.eval_interval == 0):
             mean_reward_val = []
-            for i in range(10):
+            for i in range(2):
                 ob_rms = utils.get_vec_normalize(envs).ob_rms
                 mean_reward_val.append(evaluate(actor_critic, ob_rms, args.env_name, i+10000,
                          args.num_processes, eval_log_dir, device,path))
