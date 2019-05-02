@@ -20,6 +20,7 @@ from a2c_ppo_acktr.storage import RolloutStorage
 from evaluation import evaluate
 import xml.etree.ElementTree as ET
 from gym.envs.registration import register
+from shutil import copyfile
 
 def make_mujoco_file(env_name,offline_directory,dt):
     game_list = {"Walker2d-v2":"walker2d",
@@ -27,8 +28,8 @@ def make_mujoco_file(env_name,offline_directory,dt):
                  "Swimmer-v2":"swimmer",
                  "HalfCheetah-v2":"half_cheetah",
                  "InvertedDoublePendulum-v2":"inverted_double_pendulum"}
-
-    tree = ET.parse('./gym/gym/envs/mujoco/assets/'+game_list[env_name]+ '.xml')
+    copyfile('./gym/gym/envs/mujoco/assets/'+game_list[env_name]+ '.xml',offline_directory+game_list[env_name]+ '.xml')
+    tree = ET.parse(offline_directory+game_list[env_name]+ '.xml')
     root = tree.getroot()
 
     if dt != 0:
@@ -44,6 +45,7 @@ def make_mujoco_file(env_name,offline_directory,dt):
 def main():
     args = get_args()
     path = make_mujoco_file(args.env_name,args.offline_directory,args.dt)
+
 
     if args.algo in ["a2c","acktr"]:
         raise "Not implemented"

@@ -156,7 +156,7 @@ def get_args():
         help='estimate the beta for the value function')
     parser.add_argument('--N-backprop',
         type=int,
-        default=5,
+        default=1,
         help='Truncate backprop after n step')
     parser.add_argument('--offline-directory',
         type=str,
