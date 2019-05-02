@@ -35,7 +35,7 @@ ppo
 --gamma
 0.99
 --env-name
-Hopper-v2
+Walker2d-v2
 --num-mini-batch
 32
 --N-backprop
