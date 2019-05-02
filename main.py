@@ -25,13 +25,16 @@ def make_mujoco_file(env_name,offline_directory,dt):
     game_list = {"Walker2d-v2":"walker2d",
                  "Hopper-v2":"hopper",
                  "Swimmer-v2":"swimmer",
-                 "HalfCheetah-v2":"half_cheetah.xml",
+                 "HalfCheetah-v2":"half_cheetah",
                  "InvertedDoublePendulum-v2":"inverted_double_pendulum"}
 
     tree = ET.parse('./gym/gym/envs/mujoco/assets/'+game_list[env_name]+ '.xml')
     root = tree.getroot()
+
     if dt != 0:
-        root[2].attrib['timestep'] = str(float(root[2].attrib['timestep'])*dt)
+        for i in root:
+            if "timestep" in i.attrib.keys():
+                i.attrib["timestep"] = str(float(i.attrib['timestep'])*dt)
     file = ET.tostring(root, encoding='utf8').decode('utf8')
     path = offline_directory + str.lower(env_name[:-3])+ '_tmp.xml'
     with open(path,'w') as f:
