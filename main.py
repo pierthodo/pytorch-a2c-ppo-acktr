@@ -27,7 +27,8 @@ def make_mujoco_file(env_name,offline_directory,dt):
                  "Hopper-v2":"hopper",
                  "Swimmer-v2":"swimmer",
                  "HalfCheetah-v2":"half_cheetah",
-                 "InvertedDoublePendulum-v2":"inverted_double_pendulum"}
+                 "InvertedDoublePendulum-v2":"inverted_double_pendulum",
+                 "Humanoid-v2":"humanoid"}
     copyfile('./gym/gym/envs/mujoco/assets/'+game_list[env_name]+ '.xml',offline_directory+game_list[env_name]+ '.xml')
     tree = ET.parse(offline_directory+game_list[env_name]+ '.xml')
     root = tree.getroot()
