@@ -88,7 +88,6 @@ class PPO():
                 action_loss = (-torch.min(surr1, surr2)).mean()
 
                 if self.use_clipped_value_loss:
-                    #raise("THIS CRAP USES CLIPPED VALUE LOSS TO FIX AND RETEST HYPER...")
                     value_pred_clipped = value_preds_batch + \
                         (values - value_preds_batch).clamp(-self.clip_param, self.clip_param)
                     value_losses = (values - return_batch).pow(2)

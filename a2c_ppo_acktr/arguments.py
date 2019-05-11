@@ -182,6 +182,14 @@ def get_args():
         type=float,
         default=1,
         )
+    parser.add_argument('--num-layers',
+        type=int,
+        default=2,
+                        )
+    parser.add_argument('--hidden-size',
+         type=int,
+         default=64
+                        )
     args = parser.parse_args()
 
     args.cuda = not args.no_cuda and torch.cuda.is_available()

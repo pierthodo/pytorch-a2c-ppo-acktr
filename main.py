@@ -71,7 +71,7 @@ def main():
     actor_critic = Policy(
         envs.observation_space.shape,
         envs.action_space,args.num_processes,args.N_backprop,args.num_steps,args.recurrent_policy,args.N_recurrent,
-        base_kwargs={'recurrent': args.recurrent_policy,'est_value': args.est_value})
+        base_kwargs={'recurrent': args.recurrent_policy,'est_value': args.est_value,"num_layers":args.num_layers,"hidden_size":args.hidden_size})
     actor_critic.to(device)
 
     if args.algo == 'a2c':
