@@ -76,6 +76,7 @@ class RolloutStorage(object):
                         gamma,
                         gae_lambda,
                         beta_reg,
+                        learned_beta_reg,
                         use_proper_time_limits=True):
         if use_proper_time_limits:
             if use_gae:
@@ -109,12 +110,16 @@ class RolloutStorage(object):
                 mixed_target = torch.tensor(self.num_steps + 1, self.num_processes, 1)
                 delta = torch.tensor(self.num_steps + 1, self.num_processes, 1)
                 for step in range(self.rewards.size(0)):
+                    if learned_beta_reg:
+                        beta = (1-self.beta_v[step])
+                    else:
+                        beta = beta_reg
                     if step == 0:
                         mixed_target[0] = self.value_preds[0]
                         delta[0] = self.rewards[step] + gamma * self.value_preds[step + 1] * self.masks[step + 1] - self.value_preds[step]
                     else:
-                        mixed_target[step] = (1-beta_reg) * self.value_preds[step] + (beta_reg)*mixed_target[step-1]
-                        delta[step] = self.rewards[step] + gamma * ((1-beta_reg)*self.value_preds[step + 1]+beta_reg * mixed_target[step-1]) * self.masks[step + 1] - self.value_preds[step]
+                        mixed_target[step] = (1-beta) * self.value_preds[step] + (beta)*mixed_target[step-1]
+                        delta[step] = self.rewards[step] + gamma * ((1-beta)*self.value_preds[step + 1]+beta * mixed_target[step-1]) * self.masks[step + 1] - self.value_preds[step]
 
                 for step in reversed(range(self.rewards.size(0))):
                     gae = delta[step] + gamma * gae_lambda * self.masks[step +

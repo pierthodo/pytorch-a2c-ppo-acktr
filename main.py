@@ -187,7 +187,7 @@ def main():
                     rollouts.masks[step])
 
         rollouts.compute_returns(next_value, args.use_gae, args.gamma,
-                                 args.gae_lambda,args.beta_reg, args.use_proper_time_limits)
+                                 args.gae_lambda,args.beta_reg,args.learned_beta_reg, args.use_proper_time_limits)
 
         value_loss, action_loss, dist_entropy = agent.update(rollouts)
 
