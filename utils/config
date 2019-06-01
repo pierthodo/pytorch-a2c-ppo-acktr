@@ -46,3 +46,7 @@ Walker2d-v2
 0.0003
 --offline-directory
 utils/
+--num-layers
+3
+--beta-reg
+0.2

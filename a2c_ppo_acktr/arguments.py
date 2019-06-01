@@ -190,6 +190,10 @@ def get_args():
          type=int,
          default=64
                         )
+    parser.add_argument('--beta-reg',
+         type=float,
+         default=0,
+                        )
     args = parser.parse_args()
 
     args.cuda = not args.no_cuda and torch.cuda.is_available()

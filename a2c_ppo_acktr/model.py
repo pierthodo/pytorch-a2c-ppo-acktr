@@ -290,7 +290,6 @@ class MLPBase(NNBase):
         init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.
                                constant_(x, 0), np.sqrt(2))
         if num_layers ==2:
-            print("AA")
             self.actor = nn.Sequential(
                 init_(nn.Linear(num_inputs, hidden_size)), nn.Tanh(),
                 init_(nn.Linear(hidden_size, hidden_size)), nn.Tanh())
@@ -299,7 +298,6 @@ class MLPBase(NNBase):
                 init_(nn.Linear(num_inputs, hidden_size)), nn.Tanh(),
                 init_(nn.Linear(hidden_size, hidden_size)), nn.Tanh())
         else:
-            print("BB")
             self.actor = nn.Sequential(
                 init_(nn.Linear(num_inputs, hidden_size)), nn.Tanh(),
                 init_(nn.Linear(hidden_size, hidden_size)), nn.Tanh(),
