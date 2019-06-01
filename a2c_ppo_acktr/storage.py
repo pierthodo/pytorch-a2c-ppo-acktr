@@ -111,7 +111,7 @@ class RolloutStorage(object):
                 delta = torch.tensor(self.num_steps + 1, self.num_processes, 1)
                 for step in range(self.rewards.size(0)):
                     if learned_beta_reg:
-                        beta = (1-self.beta_v[step])
+                        beta = self.beta_v[step]
                     else:
                         beta = beta_reg
                     if step == 0:
