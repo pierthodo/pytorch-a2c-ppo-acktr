@@ -136,7 +136,7 @@ def main():
     num_updates = int(
         args.num_env_steps) // args.num_steps // args.num_processes
     for j in range(num_updates):
-
+        args.beta_reg /= 1+args.decay_beta_reg*j
         if args.use_linear_lr_decay:
             # decrease learning rate linearly
             utils.update_linear_schedule(

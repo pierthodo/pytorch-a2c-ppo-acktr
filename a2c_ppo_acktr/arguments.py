@@ -210,6 +210,10 @@ def get_args():
         type=float,
         default=0.5,
         )
+    parser.add_argument('--decay-beta-reg',
+        type=float,
+        default=0.00005
+                        )
     args = parser.parse_args()
 
     args.cuda = not args.no_cuda and torch.cuda.is_available()
