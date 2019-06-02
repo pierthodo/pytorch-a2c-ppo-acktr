@@ -1,3 +1,4 @@
+from comet_ml import Experiment
 import copy
 import glob
 import os
@@ -62,6 +63,9 @@ def main():
     utils.cleanup_log_dir(log_dir)
     utils.cleanup_log_dir(eval_log_dir)
 
+    if args.log_comet:
+        experiment = Experiment(api_key="HFFoR5WtTjoHuBGq6lYaZhG0c",
+                                project_name="estimate-value", workspace="pierthodo")
     torch.set_num_threads(1)
     device = torch.device("cuda:0" if args.cuda else "cpu")
 
@@ -193,7 +197,7 @@ def main():
         rollouts.compute_returns(next_value, args.use_gae, args.gamma,
                                  args.gae_lambda,args.beta_reg,args.learned_beta_reg, args.use_proper_time_limits)
 
-        value_loss, action_loss, dist_entropy = agent.update(rollouts)
+        value_loss, action_loss, dist_entropy, delib_loss = agent.update(rollouts)
 
         rollouts.after_update()
 
@@ -222,6 +226,11 @@ def main():
                         np.median(episode_rewards), np.min(episode_rewards),
                         np.max(episode_rewards), dist_entropy, value_loss,
                         action_loss))
+            if args.log_comet:
+                experiment.log_metrics({"mean reward": np.mean(episode_rewards),
+                           "beta mean":np.array(rollouts.beta_v.data.cpu()).mean(),
+                           "beta std":np.array(rollouts.beta_v.data.cpu()).std(),
+                                        "delib loss":delib_loss,"value loss":value_loss,"action loss": action_loss,"dist entropy": dist_entropy},step=j * args.num_steps * args.num_processes,)
             result.append({"step":j * args.num_steps * args.num_processes,"mean reward": np.mean(episode_rewards),
                            "beta mean":np.array(rollouts.beta_v.data.cpu()).mean(),
                            "beta std":np.array(rollouts.beta_v.data.cpu()).std()})
