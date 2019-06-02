@@ -44,7 +44,7 @@ class PPO():
             else:
                 self.param_list.append(param)
         self.optimizer = optim.Adam(
-            [{'params': self.param_list},{'params':self.param_beta,:'lr':lr_beta}], lr, eps=eps)
+            [{'params': self.param_list},{'params':self.param_beta,'lr':lr_beta}], lr, eps=eps)
 
     def update(self, rollouts):
         advantages = rollouts.returns[:-1] - rollouts.value_mixed[1:]
@@ -122,10 +122,7 @@ class PPO():
                 nn.utils.clip_grad_norm_(self.param_beta,self.max_grad_norm_beta)
                 self.optimizer.step()
 
-                (value_loss * self.value_loss_coef + delib_loss +action_loss -
-                 dist_entropy * self.entropy_coef).backward()
 
-                self.optimizer_beta.step()
                 value_loss_epoch += value_loss.item()
                 action_loss_epoch += action_loss.item()
                 dist_entropy_epoch += dist_entropy.item()
