@@ -17,6 +17,7 @@ class PPO():
                  eps=None,
                  N_recurrent=0,
                  max_grad_norm=None,
+                 max_grad_norm_beta=None,
                  weighted_loss=0,
                  use_clipped_value_loss=True):
 
@@ -110,6 +111,7 @@ class PPO():
                  dist_entropy * self.entropy_coef).backward()
                 nn.utils.clip_grad_norm_(self.actor_critic.parameters(),
                                          self.max_grad_norm)
+                nn.utils.clip_grad_norm_(self.param_beta,self.max_grad_norm_beta)
                 self.optimizer.step()
 
                 value_loss_epoch += value_loss.item()
