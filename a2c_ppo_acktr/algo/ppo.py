@@ -114,7 +114,6 @@ class PPO():
                     delib_loss = torch.zeros_like(value_loss)
 
                 self.optimizer.zero_grad()
-                self.optimizer_beta.zero_grad()
                 (value_loss * self.value_loss_coef + action_loss -
                  dist_entropy * self.entropy_coef).backward()
                 nn.utils.clip_grad_norm_(self.actor_critic.parameters(),
