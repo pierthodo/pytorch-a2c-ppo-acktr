@@ -31,6 +31,7 @@ class PPO():
         self.entropy_coef = entropy_coef
 
         self.max_grad_norm = max_grad_norm
+        self.max_grad_norm_beta = max_grad_norm_beta
         self.use_clipped_value_loss = use_clipped_value_loss
 
 
