@@ -308,6 +308,7 @@ class MLPBase(NNBase):
                 init_(nn.Linear(hidden_size, hidden_size)), nn.Tanh(),
                 init_(nn.Linear(hidden_size, hidden_size)), nn.Tanh())
         if non_linear_value:
+            raise("Not implemented")
             self.critic_linear = nn.Sequential(init_(nn.Linear(hidden_size, 1)),
                                                nn.Sigmoid())
         else:
