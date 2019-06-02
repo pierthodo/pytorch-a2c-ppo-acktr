@@ -44,8 +44,7 @@ class PPO():
             else:
                 self.param_list.append(param)
         self.optimizer = optim.Adam(
-            [{'params': self.param_list}], lr, eps=eps)
-        self.optimizer_beta = optim.Adam([{'params':self.param_beta}],lr_beta,eps=eps)
+            [{'params': self.param_list},{'params':self.param_beta,:'lr':lr_beta}], lr, eps=eps)
 
     def update(self, rollouts):
         advantages = rollouts.returns[:-1] - rollouts.value_mixed[1:]
@@ -110,20 +109,20 @@ class PPO():
 
                 if self.delib_coef > 0:
                     target_beta = torch.zeros_like(mean_beta_v).fill_(1)
-                    delib_loss = F.mse_loss(mean_beta_v, target_beta)
+                    delib_loss = F.mse_loss(mean_beta_v, target_beta)*value_loss*self.value_loss_coef*self.delib_coef
                 else:
                     delib_loss = torch.zeros_like(value_loss)
 
                 self.optimizer.zero_grad()
                 self.optimizer_beta.zero_grad()
                 (value_loss * self.value_loss_coef + action_loss -
-                 dist_entropy * self.entropy_coef).backward(retain_graph=True)
+                 dist_entropy * self.entropy_coef).backward()
                 nn.utils.clip_grad_norm_(self.actor_critic.parameters(),
                                          self.max_grad_norm)
                 nn.utils.clip_grad_norm_(self.param_beta,self.max_grad_norm_beta)
                 self.optimizer.step()
 
-                (value_loss * self.value_loss_coef + value_loss * self.value_loss_coef * delib_loss * self.delib_coef +action_loss -
+                (value_loss * self.value_loss_coef + delib_loss +action_loss -
                  dist_entropy * self.entropy_coef).backward()
 
                 self.optimizer_beta.step()
