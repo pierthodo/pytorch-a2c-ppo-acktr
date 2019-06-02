@@ -281,7 +281,7 @@ class CNNBase(NNBase):
 
 
 class MLPBase(NNBase):
-    def __init__(self, num_inputs, recurrent=False, hidden_size=64,num_layers=2, est_value = False,init_beta=0):
+    def __init__(self, num_inputs, recurrent=False, hidden_size=64,num_layers=2, est_value = False,init_beta=0,non_linear_value=0):
         super(MLPBase, self).__init__(recurrent, num_inputs, hidden_size)
         self.est_value = est_value
         if recurrent:
@@ -307,8 +307,11 @@ class MLPBase(NNBase):
                 init_(nn.Linear(num_inputs, hidden_size)), nn.Tanh(),
                 init_(nn.Linear(hidden_size, hidden_size)), nn.Tanh(),
                 init_(nn.Linear(hidden_size, hidden_size)), nn.Tanh())
-
-        self.critic_linear = init_(nn.Linear(hidden_size, 1))
+        if non_linear_value:
+            self.critic_linear = nn.Sequential(init_(nn.Linear(hidden_size, 1)),
+                                               nn.Sigmoid())
+        else:
+            self.critic_linear = init_(nn.Linear(hidden_size, 1))
 
         ## RECURRENT TD
         init_ = lambda m: init(m,
