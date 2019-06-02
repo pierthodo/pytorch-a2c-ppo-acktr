@@ -19,7 +19,7 @@ ppo
 --noise-obs
 0
 --num-env-steps
-3000000
+1000000
 --use-gae
 1
 --num-processes
@@ -37,11 +37,11 @@ ppo
 --env-name
 Walker2d-v2
 --num-mini-batch
-32
+1
 --N-backprop
 5
 --ppo-epoch
-10
+1
 --dt
 1
 --offline-directory
@@ -49,6 +49,8 @@ utils/
 --num-layers
 3
 --beta-reg
-0.2
+0
 --learned-beta-reg
-1
+0
+--init-beta
+3

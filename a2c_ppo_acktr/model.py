@@ -114,7 +114,7 @@ class Policy(nn.Module):
                 value,actor_features,_,beta_v = self.base(inputs[indices_ext[i]],rnn_hxs[indices_ext[i]],
                                                                 masks[indices_ext[i]])
 
-                prev_value = prev_value_list[indices_ext[i][0]]
+                prev_value = prev_value_list[indices_ext[i]]
                 for idx,p in enumerate(indices_ext[i]):
                     prev_value = masks[p] * prev_value + (1 - masks[p]) * value[idx]
                     prev_value = beta_v[idx] * value[idx] + (1 - beta_v[idx]) * prev_value
@@ -134,7 +134,7 @@ class Policy(nn.Module):
         else:
             value_original, actor_features, _, _ = self.base(inputs[indices], rnn_hxs[indices], masks[indices])
             dist = self.dist(actor_features)
-
+            # TODO FIX SHAPE OF IMCOMAING DATA
             action_log_probs = dist.log_probs(action[indices])
             dist_entropy = dist.entropy().mean()
 
@@ -281,7 +281,7 @@ class CNNBase(NNBase):
 
 
 class MLPBase(NNBase):
-    def __init__(self, num_inputs, recurrent=False, hidden_size=64,num_layers=2, est_value = False):
+    def __init__(self, num_inputs, recurrent=False, hidden_size=64,num_layers=2, est_value = False,init_beta=0):
         super(MLPBase, self).__init__(recurrent, num_inputs, hidden_size)
         self.est_value = est_value
         if recurrent:
@@ -313,7 +313,7 @@ class MLPBase(NNBase):
         ## RECURRENT TD
         init_ = lambda m: init(m,
             nn.init.orthogonal_,
-            lambda x: nn.init.constant_(x, 0))
+            lambda x: nn.init.constant_(x, init_beta))
 
         self.beta_net_value = nn.Sequential(
             init_(nn.Linear(num_inputs, hidden_size)),

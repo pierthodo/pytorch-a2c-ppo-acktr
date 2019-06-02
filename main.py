@@ -71,7 +71,7 @@ def main():
     actor_critic = Policy(
         envs.observation_space.shape,
         envs.action_space,args.num_processes,args.N_backprop,args.num_steps,args.recurrent_policy,args.N_recurrent,
-        base_kwargs={'recurrent': args.recurrent_policy,'est_value': args.est_value,"num_layers":args.num_layers,"hidden_size":args.hidden_size})
+        base_kwargs={'recurrent': args.recurrent_policy,'est_value': args.est_value,"num_layers":args.num_layers,"hidden_size":args.hidden_size,"init_beta":args.init_beta})
     actor_critic.to(device)
 
     if args.algo == 'a2c':
@@ -129,7 +129,7 @@ def main():
     result = []
     result_val = []
     start = time.time()
-    prev_value = 0
+    prev_value = torch.zeros(args.num_processes,1)
     num_updates = int(
         args.num_env_steps) // args.num_steps // args.num_processes
     for j in range(num_updates):
