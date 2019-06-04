@@ -76,7 +76,12 @@ class PPO():
                     rollouts.actions.view(-1, rollouts.actions.size(-1)),
                     rollouts.value_mixed.view(-1,1),indices)
 
-
+                #values, action_log_probs, dist_entropy, _, mean_beta_v = self.actor_critic.evaluate_actions(
+                #    rollouts.obs[:-1],
+                #    rollouts.recurrent_hidden_states[:-1],
+                #    rollouts.masks[:-1],
+                #    rollouts.actions,
+                #    rollouts.value_mixed,indices)
                 ratio = torch.exp(action_log_probs -
                                   old_action_log_probs_batch)
                 surr1 = ratio * adv_targ
