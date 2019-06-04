@@ -46,7 +46,8 @@ def make_mujoco_file(env_name,offline_directory,dt):
 
 def main():
     args = get_args()
-    path = make_mujoco_file(args.env_name,args.offline_directory,args.dt)
+    #path = make_mujoco_file(args.env_name,args.offline_directory,args.dt)
+    path = ""
 
 
     if args.algo in ["a2c","acktr"]:
@@ -132,8 +133,9 @@ def main():
 
     obs = envs.reset()
     rollouts.obs[0].copy_(obs)
-    rollouts.to(device)
+    rollouts.masks[0].copy_(torch.zeros(args.num_processes,1))
 
+    rollouts.to(device)
     episode_rewards = deque(maxlen=10)
     result = []
     result_val = []
@@ -155,7 +157,6 @@ def main():
                 value, action, action_log_prob, recurrent_hidden_states, value_mixed, beta_v = actor_critic.act(
                     rollouts.obs[step], rollouts.recurrent_hidden_states[step],
                     rollouts.masks[step],prev_value)
-
             # Obser reward and next obs
             obs, reward, done, infos = envs.step(action)
 

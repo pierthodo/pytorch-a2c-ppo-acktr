@@ -1,5 +1,5 @@
 --num-steps
-2048
+3
 --gae-lambda
 0.95
 --algo
@@ -23,7 +23,7 @@ ppo
 --use-gae
 1
 --num-processes
-1
+2
 --entropy-coef
 0
 --value-loss-coef
@@ -39,7 +39,7 @@ Swimmer-v2
 --num-mini-batch
 1
 --N-backprop
-5
+2
 --ppo-epoch
 1
 --dt
@@ -57,6 +57,8 @@ utils/
 --max-grad-norm-beta
 0.5
 --delib-coef
-1
+0
 --log-comet
+0
+--fixed-beta
 1

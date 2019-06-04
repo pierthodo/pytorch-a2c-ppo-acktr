@@ -6,7 +6,7 @@ import torch
 from gym.spaces.box import Box
 
 from baselines import bench
-#from baselines.common.atari_wrappers import make_atari, wrap_deepmind
+from baselines.common.atari_wrappers import make_atari, wrap_deepmind
 from baselines.common.vec_env import VecEnvWrapper
 from baselines.common.vec_env.dummy_vec_env import DummyVecEnv
 from baselines.common.vec_env.shmem_vec_env import ShmemVecEnv
@@ -36,7 +36,8 @@ def make_env(env_id, seed, rank, log_dir, allow_early_resets,path):
             env = dm_control2gym.make(domain_name=domain, task_name=task)
         else:
             env = gym.make(env_id)
-            env.env.change_xml(path)
+            if path != "":
+                env.env.change_xml(path)
 
         is_atari = hasattr(gym.envs, 'atari') and isinstance(
             env.unwrapped, gym.envs.atari.atari_env.AtariEnv)

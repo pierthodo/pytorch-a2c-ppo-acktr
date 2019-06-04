@@ -80,15 +80,18 @@ class Policy(nn.Module):
         return value
 
     def get_index(self,indices):
-        del_index = [i*self.num_steps for i in list(range(self.num_processes))] ## First you identify the index of the end of the storage of the processes
         index_ext = []
         for b in indices:
-            lim = del_index[int(b/(self.num_steps))]
+            #lim = del_index[int(b/(self.num_steps))]
             tmp = []
-            for i in reversed(range(self.N_backprop)):
-                if not b-i < 0: # if the index used goes on another process memory than block it
-                    tmp.append(b-i)
-            index_ext.append(tmp)
+            for i in range(self.N_backprop):
+                if b-(i*self.num_processes) < 0:
+                    for _ in range(self.N_backprop - i ):
+                        tmp.append(b-((i-1)*(self.num_processes)))
+                    break
+                else:
+                    tmp.append(b-(i*self.num_processes))
+            index_ext.append(list(reversed(tmp)))
         return index_ext
 
     def evaluate_actions(self, inputs, rnn_hxs, masks, action,prev_value_list,indices):
@@ -160,6 +163,9 @@ class Policy(nn.Module):
             value_mixed = torch.stack(value_mixed, dim=0)
             mean_beta_v = torch.stack(mean_beta_v_list,dim=0).detach()
             #
+            indices_1 =  [x+2 for x in indices]
+            test = prev_value_list[indices_1]
+            test_2 = test==value_mixed
             #value_mixed, _, _, _ = self.base(inputs[indices], rnn_hxs[indices], masks[indices])
             return value_mixed, action_log_probs, dist_entropy, rnn_hxs,mean_beta_v
 
@@ -252,9 +258,10 @@ class NNBase(nn.Module):
 
 
 class CNNBase(NNBase):
-    def __init__(self, num_inputs, recurrent=False, hidden_size=512):
+    def __init__(self, num_inputs, recurrent=False, hidden_size=512,num_layers=3, est_value = False,init_beta=0,non_linear_value=0,fixed_beta=1):
         super(CNNBase, self).__init__(recurrent, hidden_size, hidden_size)
-
+        self.est_value = est_value
+        self.fixed_beta = fixed_beta
         init_ = lambda m: init(m, nn.init.orthogonal_, lambda x: nn.init.
                                constant_(x, 0), nn.init.calculate_gain('relu'))
 
@@ -269,6 +276,16 @@ class CNNBase(NNBase):
 
         self.critic_linear = init_(nn.Linear(hidden_size, 1))
 
+        init_ = lambda m: init(m,
+            nn.init.orthogonal_,
+            lambda x: nn.init.constant_(x, 0))
+
+
+        self.beta_net_value_linear = nn.Sequential(
+            init_(nn.Linear(hidden_size, 1)),
+            nn.Sigmoid()
+        )
+
         self.train()
 
     def forward(self, inputs, rnn_hxs, masks):
@@ -276,8 +293,14 @@ class CNNBase(NNBase):
 
         if self.is_recurrent:
             x, rnn_hxs = self._forward_gru(x, rnn_hxs, masks)
+        ### RECURRENT TD
 
-        return self.critic_linear(x), x, rnn_hxs
+        if self.est_value:
+            beta_value = self.beta_net_value_linear(x)
+        else:
+            beta_value = torch.ones_like(masks) * self.fixed_beta
+        ##
+        return self.critic_linear(x), x, rnn_hxs,beta_value
 
 
 class MLPBase(NNBase):

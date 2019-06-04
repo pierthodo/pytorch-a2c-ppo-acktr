@@ -111,8 +111,8 @@ class RolloutStorage(object):
             if use_gae:
                 self.value_preds[-1] = next_value
                 gae = 0
-                mixed_target = torch.tensor(self.num_steps + 1, self.num_processes, 1)
-                delta = torch.tensor(self.num_steps + 1, self.num_processes, 1)
+                mixed_target = torch.zeros(self.num_steps + 1, self.num_processes, 1)
+                delta = torch.zeros(self.num_steps + 1, self.num_processes, 1)
                 for step in range(self.rewards.size(0)):
                     if learned_beta_reg:
                         beta = (1-self.beta_v[step])
