@@ -163,9 +163,9 @@ class Policy(nn.Module):
             value_mixed = torch.stack(value_mixed, dim=0)
             mean_beta_v = torch.stack(mean_beta_v_list,dim=0).detach()
             #
-            indices_1 =  [x+2 for x in indices]
-            test = prev_value_list[indices_1]
-            test_2 = test==value_mixed
+            #indices_1 =  [x+2 for x in indices]
+            #test = prev_value_list[indices_1]
+            #test_2 = test==value_mixed
             #value_mixed, _, _, _ = self.base(inputs[indices], rnn_hxs[indices], masks[indices])
             return value_mixed, action_log_probs, dist_entropy, rnn_hxs,mean_beta_v
 
