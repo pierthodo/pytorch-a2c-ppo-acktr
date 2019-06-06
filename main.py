@@ -248,7 +248,7 @@ def main():
             #for i in range(2):
             #    ob_rms = utils.get_vec_normalize(envs).ob_rms
             #    mean_reward_val.append(evaluate(actor_critic, ob_rms, args.env_name, i+10000,
-                         args.num_processes, eval_log_dir, device,path))
+            #            args.num_processes, eval_log_dir, device,path))
             #result_val.append({"step":j * args.num_steps * args.num_processes,"val reward":np.array(mean_reward_val).mean()})
 
 if __name__ == "__main__":
