@@ -13,9 +13,9 @@ ppo
 --est-value
 1
 --recurrent-policy
-0
+1
 --N-recurrent
-0
+10
 --noise-obs
 0
 --num-env-steps
