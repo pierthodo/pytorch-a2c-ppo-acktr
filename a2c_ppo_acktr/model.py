@@ -112,12 +112,11 @@ class Policy(nn.Module):
             indices_ext_flat = [item for sublist in indices_ext for item in sublist]
             value_mixed = []
             actor_features_list = []
-            print(len(indices))
             for i in range(len(indices)):
                 value,actor_features,_,beta_v = self.base(inputs[indices_ext[i]],rnn_hxs[indices_ext[i]],
                                                                 masks[indices_ext[i]])
 
-                prev_value = prev_value_list[indices_ext[i]]
+                prev_value = prev_value_list[indices_ext[i][0]]
                 for idx,p in enumerate(indices_ext[i]):
                     prev_value = masks[p] * prev_value + (1 - masks[p]) * value[idx]
                     prev_value = beta_v[idx] * value[idx] + (1 - beta_v[idx]) * prev_value
@@ -130,7 +129,6 @@ class Policy(nn.Module):
             dist = self.dist(actor_features)
             action_log_probs = dist.log_probs(action[indices])
             dist_entropy = dist.entropy().mean()
-
             return value_mixed, action_log_probs, dist_entropy, rnn_hxs,beta_v
 
 

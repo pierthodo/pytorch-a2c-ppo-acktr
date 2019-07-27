@@ -1,5 +1,5 @@
 --num-steps
-3
+60
 --gae-lambda
 0.95
 --algo
@@ -23,7 +23,7 @@ ppo
 --use-gae
 1
 --num-processes
-2
+1
 --entropy-coef
 0
 --value-loss-coef
@@ -37,7 +37,7 @@ ppo
 --env-name
 Swimmer-v2
 --num-mini-batch
-1
+2
 --N-backprop
 2
 --ppo-epoch
