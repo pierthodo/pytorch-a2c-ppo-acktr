@@ -112,7 +112,7 @@ class Policy(nn.Module):
             indices_ext_flat = [item for sublist in indices_ext for item in sublist]
             value_mixed = []
             actor_features_list = []
-
+            print(len(indices))
             for i in range(len(indices)):
                 value,actor_features,_,beta_v = self.base(inputs[indices_ext[i]],rnn_hxs[indices_ext[i]],
                                                                 masks[indices_ext[i]])
